@@ -1,5 +1,6 @@
 #include <SensorNeighbor.h>
 #include <pluginlib/class_list_macros.h>
+#include <mrs_lib/attitude_converter.h>
 
 namespace sensor_neighbor{
 
@@ -29,16 +30,16 @@ void SensorNeighbor::onInit(){
   	num_uavs_ = _uav_names_.size();
 
 	/* Message filters */
-	sub_odom_uav1_.subscribe(nh, "/"+ _uav_names_[0] +"/odometry/odom_main", 1);
-	sub_odom_uav2_.subscribe(nh, "/"+ _uav_names_[1] +"/odometry/odom_main", 1);
-	sub_odom_uav3_.subscribe(nh, "/"+ _uav_names_[2] +"/odometry/odom_main", 1);
-	sub_odom_uav4_.subscribe(nh, "/"+ _uav_names_[3] +"/odometry/odom_main", 1);
+	sub_odom_uav1_.subscribe(nh, "/"+ _uav_names_[0] +"/odometry/odom_slow", 1);
+	sub_odom_uav2_.subscribe(nh, "/"+ _uav_names_[1] +"/odometry/odom_slow", 1);
+	sub_odom_uav3_.subscribe(nh, "/"+ _uav_names_[2] +"/odometry/odom_slow", 1);
+	sub_odom_uav4_.subscribe(nh, "/"+ _uav_names_[3] +"/odometry/odom_slow", 1);
 	
 	sync_.reset(new Sync(OdomPolicy(10), sub_odom_uav1_, sub_odom_uav2_, sub_odom_uav3_, sub_odom_uav4_));
 	sync_->registerCallback(boost::bind(&SensorNeighbor::callbackUAVsPose, this, _1, _2, _3, _4));
 
 	/* Publishers */
-	for(int i = 0; i < num_uavs_; i++){
+	for(int i = 0; i < int(num_uavs_); i++){
 		neigbor_pub_.push_back(nh.advertise<flocking::Neighbors>("/sensor_neighbor/"+ _uav_names_[i] +"/neighbors", 1));
 	}
 
@@ -68,46 +69,28 @@ void SensorNeighbor::callbackUAVsPose(const nav_msgs::Odometry::ConstPtr& odom_u
 
 	/* used to convert quartenion to euler */
 	tf::Quaternion q;
-	double roll, pitch, yaw;
 	std::vector<double> x(num_uavs_);
 	std::vector<double> y(num_uavs_);
 	std::vector<double> orientation(num_uavs_);
 
-	/* collect UAV1 pose */
-	tf::quaternionMsgToTF(odom_uav1->pose.pose.orientation, q);
-  	tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  	x[0] = odom_uav1->pose.pose.position.x;
-	y[0] = odom_uav1->pose.pose.position.y;
-	orientation[0] = yaw;
-
-	/* collect UAV2 pose */
-	tf::quaternionMsgToTF(odom_uav2->pose.pose.orientation, q);
-  	tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  	x[1] = odom_uav2->pose.pose.position.x;
-	y[1] = odom_uav2->pose.pose.position.y;
-	orientation[1] = yaw;
-
-	/* collect UAV3 pose */
-	tf::quaternionMsgToTF(odom_uav3->pose.pose.orientation, q);
-  	tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  	x[2] = odom_uav3->pose.pose.position.x;
-	y[2] = odom_uav3->pose.pose.position.y;
-	orientation[2] = yaw;
-
-	/* collect UAV4 pose */
-	tf::quaternionMsgToTF(odom_uav4->pose.pose.orientation, q);
-  	tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  	x[3] = odom_uav4->pose.pose.position.x;
-	y[3] = odom_uav4->pose.pose.position.y;
-	orientation[3] = yaw;
+	/* collect UAV1 heading */
+  // If you search for the "bearing", the "yaw" is not what you "want".
+  // ROS uses the extrinsic RPY convention, so the yawing is the last rotation and it happens around the world z-axis.
+  // That means that yaw=0 does not mean anything special, both the body-X and body-Y axis can have arbitrary heading depending on pitch and roll.
+  // Ofc, this is "negligable" for small tilts, but its good to know.
+  // I recommend to use the "heading", in our case defined as the azimuth of the body-x axis, i.e., atan2(by, bx)
+	orientation[0] = mrs_lib::AttitudeConverter(odom_uav1->pose.pose.orientation).getHeading();
+	orientation[1] = mrs_lib::AttitudeConverter(odom_uav2->pose.pose.orientation).getHeading();
+	orientation[3] = mrs_lib::AttitudeConverter(odom_uav3->pose.pose.orientation).getHeading();
+	orientation[4] = mrs_lib::AttitudeConverter(odom_uav4->pose.pose.orientation).getHeading();
 
 	/* create new neigbors message */
 	std::vector<flocking::Neighbors> neighbor_info(num_uavs_);
 	
 	/* compute range and bearing */
 	double range, bearing_1, bearing_2;
-	for(int i = 0; i < num_uavs_- 1; i++){
-		for(int j = i+1; j < num_uavs_; j++){
+	for(int i = 0; i < int(num_uavs_- 1); i++){
+		for(int j = i+1; j < int(num_uavs_); j++){
 			range = sqrt(pow(x[i] - x[j], 2) + pow(y[i] - y[j], 2));
 			bearing_1 = math_operations::relativeBearing(x[i], y[i], orientation[i], x[j], y[j]);
 			bearing_2 = math_operations::relativeBearing(x[j], y[j], orientation[j], x[i], y[i]);
@@ -121,7 +104,7 @@ void SensorNeighbor::callbackUAVsPose(const nav_msgs::Odometry::ConstPtr& odom_u
 	}
 
 	/* publish info */
-	for(int i = 0; i < num_uavs_; i++){
+	for(int i = 0; i < int(num_uavs_); i++){
 		neighbor_info[i].header.frame_id = _uav_names_[i] + "/local_origin";
 		neighbor_info[i].header.stamp = ros::Time::now();
 		neighbor_info[i].num_neighbors = num_uavs_ - 1;
@@ -156,7 +139,7 @@ void SensorNeighbor::callbackUAVsPose(const nav_msgs::Odometry::ConstPtr& odom_u
 
 /* callbackTimerExperiment() \\{ */
 
-void SensorNeighbor::callbackTimerExperiment(const ros::TimerEvent& event){
+void SensorNeighbor::callbackTimerExperiment([[maybe_unused]] const ros::TimerEvent& event){
 	if(!is_initialized_) return;
 
 	if(is_bag_open_){
@@ -183,7 +166,7 @@ void SensorNeighbor::callbackTimerExperiment(const ros::TimerEvent& event){
 //}
 
 /* callbackTimerBagWriter() //{ */
-void SensorNeighbor::callbackTimerBagWriter(const ros::TimerEvent& event){
+void SensorNeighbor::callbackTimerBagWriter([[maybe_unused]] const ros::TimerEvent& event){
 	if(!is_initialized_ || !is_bag_open_) return;
 
 	/* write data on rosbag */
@@ -222,7 +205,7 @@ void SensorNeighbor::callbackTimerBagWriter(const ros::TimerEvent& event){
 
 /* callbackStartExperiment() //{ */
 
-bool SensorNeighbor::callbackStartExperiment(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
+bool SensorNeighbor::callbackStartExperiment([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
 	if(is_bag_open_){
 		ROS_WARN("[SensorNeighbor]: Request to start the experiment but it is already started");
 		res.success = true;
@@ -268,7 +251,7 @@ bool SensorNeighbor::callbackStartExperiment(std_srvs::Trigger::Request& req, st
 
 /* callbackCloseNode() //{ */
 
-bool SensorNeighbor::callbackCloseNode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
+bool SensorNeighbor::callbackCloseNode([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
 	if(is_bag_open_){
 		/* stop rosbag writer */
 		timer_bag_writer_.stop();
