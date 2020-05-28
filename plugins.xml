@@ -1,0 +1,11 @@
+<library path="lib/libFormation">
+  <class name="formation/Formation" type="formation::Formation" base_class_type="nodelet::Nodelet">
+    <description>Formation nodelet</description>
+  </class>
+</library>
+
+<library path="lib/libSensorNeighbor">
+  <class name="sensor_neighbor/SensorNeighbor" type="sensor_neighbor::SensorNeighbor" base_class_type="nodelet::Nodelet">
+    <description>SensorNeighbor nodelet</description>
+  </class>
+</library>

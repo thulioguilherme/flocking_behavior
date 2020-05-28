@@ -1,0 +1,5 @@
+experiment:
+  duration: 210 # [s]
+  
+  bag:
+    time_step: 1 # [s]
