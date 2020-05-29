@@ -37,7 +37,7 @@ void SensorNeighbor::onInit() {
     ros::shutdown();
   }
 
-  num_uavs_ = _uav_names_.size();
+  num_other_uavs_ = _uav_names_.size() - 1;
 
   /* Message filters */
   const std::string topic_name_1 =
@@ -48,22 +48,28 @@ void SensorNeighbor::onInit() {
       _uav_names_[2] != this_uav_name_ ? "/" + _uav_names_[2] + "/odometry/slow_odom" : "/" + _uav_names_[2] + "/odometry/odom_main";
   const std::string topic_name_4 =
       _uav_names_[3] != this_uav_name_ ? "/" + _uav_names_[3] + "/odometry/slow_odom" : "/" + _uav_names_[3] + "/odometry/odom_main";
-  sub_odom_uav1_.subscribe(nh, topic_name_1, 1);
-  sub_odom_uav2_.subscribe(nh, topic_name_2, 1);
-  sub_odom_uav3_.subscribe(nh, topic_name_3, 1);
-  sub_odom_uav4_.subscribe(nh, topic_name_4, 1);
+  /* sub_odom_uav1_.subscribe(nh, topic_name_1, 1); */
+  /* sub_odom_uav2_.subscribe(nh, topic_name_2, 1); */
+  /* sub_odom_uav3_.subscribe(nh, topic_name_3, 1); */
+  /* sub_odom_uav4_.subscribe(nh, topic_name_4, 1); */
+  sub_odom_uav1_ = nh.subscribe<nav_msgs::Odometry>(topic_name_1, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[0]));
+  sub_odom_uav2_ = nh.subscribe<nav_msgs::Odometry>(topic_name_2, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[1]));
+  sub_odom_uav3_ = nh.subscribe<nav_msgs::Odometry>(topic_name_3, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[2]));
+  sub_odom_uav4_ = nh.subscribe<nav_msgs::Odometry>(topic_name_4, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[3]));
+  /* nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&BoidsController::callbackMavOdometry, this, std::placeholders::_1, uav_name)); */
 
-  sync_.reset(new Sync(OdomPolicy(20), sub_odom_uav1_, sub_odom_uav2_, sub_odom_uav3_, sub_odom_uav4_));
-  sync_->registerCallback(boost::bind(&SensorNeighbor::callbackUAVsPose, this, _1, _2, _3, _4));
+  /* sync_.reset(new Sync(OdomPolicy(20), sub_odom_uav1_, sub_odom_uav2_, sub_odom_uav3_, sub_odom_uav4_)); */
+  /* sync_->registerCallback(boost::bind(&SensorNeighbor::callbackUAVsPose, this, _1, _2, _3, _4)); */
 
   /* Decentralization of this node (will be run on every unit independently) */
-  neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + this_uav_name_  + "/sensor_neighbor/neighbors", 1);
+  neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + this_uav_name_ + "/sensor_neighbor/neighbors", 1);
 
   /* Service servers */
   /* srv_server_start_experiment_ = nh.advertiseService("start_experiment", &SensorNeighbor::callbackStartExperiment, this); */
   /* srv_server_close_node_       = nh.advertiseService("close_node", &SensorNeighbor::callbackCloseNode, this); */
 
   /* Timers */
+  timer_pub_neighbors_ = nh.createTimer(ros::Rate(5.0), &SensorNeighbor::callbackTimerPubNeighbors, this);
   /* timer_bag_writer_ = nh.createTimer(ros::Duration(_timer_bag_step_), &SensorNeighbor::callbackTimerBagWriter, this, false, false); */
   /* timer_experiment_ = nh.createTimer(ros::Duration(_duration_timer_experiment_ + 1), &SensorNeighbor::callbackTimerExperiment, this, false, false); */
 
@@ -73,58 +79,78 @@ void SensorNeighbor::onInit() {
   ros::spin();
 }
 
-// | ---------------------- message filter callbacks ------------------------- |
+/* callbackTimerPubNeighbors() //{ */
 
-/* callbackUAVsPose() //{ */
+void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::TimerEvent& event) {
 
-void SensorNeighbor::callbackUAVsPose(const nav_msgs::Odometry::ConstPtr& odom_uav1, const nav_msgs::Odometry::ConstPtr& odom_uav2,
-                                      const nav_msgs::Odometry::ConstPtr& odom_uav3, const nav_msgs::Odometry::ConstPtr& odom_uav4) {
-
-  if (!is_initialized_)
+  if (!is_initialized_ || !has_odom_this_) {
     return;
-
-  /* used to convert quartenion to euler */
-  tf::Quaternion      q;
-  std::vector<double> x(num_uavs_);
-  std::vector<double> y(num_uavs_);
-  std::vector<double> orientation(num_uavs_);
-
-  std::vector<nav_msgs::Odometry> odoms = {*odom_uav1, *odom_uav2, *odom_uav3, *odom_uav4};
-  for (unsigned int i = 0; i < odoms.size(); i++) {
-    x[i] = odoms[i].pose.pose.position.x;
-    y[i] = odoms[i].pose.pose.position.y;
-
-    // If you search for the "bearing", the "yaw" is not what you "want".
-    // ROS uses the extrinsic RPY convention, so the yawing is the last rotation and it happens around the world z-axis.
-    // That means that yaw=0 does not mean anything special, both the body-X and body-Y axis can have arbitrary heading depending on pitch and roll.
-    // Ofc, this is "negligable" for small tilts, but its good to know.
-    // I recommend to use the "heading", in our case defined as the azimuth of the body-x axis, i.e., atan2(by, bx)
-    orientation[i] = mrs_lib::AttitudeConverter(odoms[i].pose.pose.orientation).getHeading();
   }
 
   /* create new neigbors message */
   flocking::Neighbors neighbor_info;
 
-  /* compute range and bearing */
-  double range, bearing_1;
-  for (unsigned int j = 0; j < (unsigned int)(num_uavs_); j++) {
-    if (this_uav_name_idx_ != j) {
-      range     = sqrt(pow(x[this_uav_name_idx_] - x[j], 2) + pow(y[this_uav_name_idx_] - y[j], 2));
-      bearing_1 = math_operations::relativeBearing(x[this_uav_name_idx_], y[this_uav_name_idx_], orientation[this_uav_name_idx_], x[j], y[j]);
+  // get odometry of this UAV
+  ros::Time          now = ros::Time::now();
+  nav_msgs::Odometry odom_this;
+  {
+    std::scoped_lock lock(mutex_odoms_);
+    odom_this           = odoms_[this_uav_name_];
+    double heading_this = mrs_lib::AttitudeConverter(odom_this.pose.pose.orientation).getHeading();
 
-      /* storage values on message */
-      neighbor_info.range.push_back(range);
-      neighbor_info.bearing.push_back(bearing_1);
+    // compute relative info to all neighbors
+    for (auto itr = odoms_.begin(); itr != odoms_.end(); ++itr) {
+      if (itr->first == this_uav_name_) {
+        continue;
+      }
+
+      // Check if we have new messages (slow_odom runs at 2Hz, so we give it small reserve)
+      if ((now - itr->second.header.stamp).toSec() < 1.0) {
+
+        // If you search for the "bearing", the "yaw" is not what you "want".
+        // ROS uses the extrinsic RPY convention, so the yawing is the last rotation and it happens around the world z-axis.
+        // That means that yaw=0 does not mean anything special, both the body-X and body-Y axis can have arbitrary heading depending on pitch and roll.
+        // Ofc, this is "negligable" for small tilts, but its good to know.
+        // I recommend to use the "heading", in our case defined as the azimuth of the body-x axis, i.e., atan2(by, bx)
+        double x = itr->second.pose.pose.position.x;
+        double y = itr->second.pose.pose.position.y;
+
+        double range   = sqrt(pow(odom_this.pose.pose.position.x - x, 2) + pow(odom_this.pose.pose.position.y - y, 2));
+        double bearing = math_operations::relativeBearing(odom_this.pose.pose.position.x, odom_this.pose.pose.position.y, heading_this, x, y);
+        neighbor_info.range.push_back(range);
+        neighbor_info.bearing.push_back(bearing);
+      }
     }
   }
-
   neighbor_info.header.frame_id = this_uav_name_ + "/local_origin";
-  neighbor_info.header.stamp    = ros::Time::now();
-  neighbor_info.num_neighbors   = num_uavs_ - 1;
-
+  neighbor_info.header.stamp    = now;
+  neighbor_info.num_neighbors   = neighbor_info.range.size();
   neigbor_pub_.publish(neighbor_info);
+}
 
-}  // namespace sensor_neighbor
+//}
+
+// | ---------------------- message filter callbacks ------------------------- |
+
+/* callbackUAVOdom() //{ */
+
+void SensorNeighbor::callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, const std::string uav_name) {
+
+  if (!is_initialized_) {
+    return;
+  }
+  {
+    std::scoped_lock lock(mutex_odoms_);
+    if (odoms_.find(uav_name) == odoms_.end()) {
+      odoms_.insert(std::pair<std::string, nav_msgs::Odometry>(uav_name, *odom));
+    } else {
+      odoms_[uav_name] = *odom;
+    }
+  }
+  if (uav_name == this_uav_name_) {
+    has_odom_this_ = true;
+  }
+}
 
 //}
 

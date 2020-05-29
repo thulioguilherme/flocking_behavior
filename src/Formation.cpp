@@ -44,7 +44,7 @@ void Formation::onInit() {
   }
 
   /* Subscriber */
-  sub_neighbors_info_ = nh.subscribe("/sensor_neighbor/" + _uav_name_ + "/neighbors", 1, &Formation::callbackUAVNeighbors, this);
+  sub_neighbors_info_ = nh.subscribe("/" + _uav_name_ + "/sensor_neighbor/neighbors", 1, &Formation::callbackUAVNeighbors, this);
 
   /* Service client */
   srv_client_switcher_ = nh.serviceClient<mrs_msgs::String>("/" + _uav_name_ + "/control_manager/switch_tracker");

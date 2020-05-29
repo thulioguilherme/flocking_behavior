@@ -8,6 +8,7 @@
 #include <rosbag/bag.h>
 #include <mutex>
 
+
 #include <time.h>
 
 #include <mrs_lib/param_loader.h>
@@ -17,7 +18,7 @@
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float32.h>
 
-
+#include <map>
 #include <std_srvs/Trigger.h>
 
 #include <tf/transform_datatypes.h>
@@ -45,24 +46,34 @@ private:
 
   // | ---------------------- message filter callbacks ------------------------- |
 
-  typedef sync_policies::ApproximateTime<nav_msgs::Odometry, nav_msgs::Odometry, nav_msgs::Odometry, nav_msgs::Odometry> OdomPolicy;
-  typedef Synchronizer<OdomPolicy>                                                                                       Sync;
-  boost::shared_ptr<Sync>                                                                                                sync_;
-  message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav1_;
-  message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav2_;
-  message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav3_;
-  message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav4_;
+  /* typedef sync_policies::ApproximateTime<nav_msgs::Odometry, nav_msgs::Odometry, nav_msgs::Odometry, nav_msgs::Odometry> OdomPolicy; */
+  /* typedef Synchronizer<OdomPolicy>                                                                                       Sync; */
+  /* boost::shared_ptr<Sync>                                                                                                sync_; */
+  /* message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav1_; */
+  /* message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav2_; */
+  /* message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav3_; */
+  /* message_filters::Subscriber<nav_msgs::Odometry>                                                                        sub_odom_uav4_; */
+  ros::Subscriber sub_odom_uav1_;
+  ros::Subscriber sub_odom_uav2_;
+  ros::Subscriber sub_odom_uav3_;
+  ros::Subscriber sub_odom_uav4_;
 
-  void callbackUAVsPose(const nav_msgs::Odometry::ConstPtr& odom_uav1, const nav_msgs::Odometry::ConstPtr& odom_uav2,
-                        const nav_msgs::Odometry::ConstPtr& odom_uav3, const nav_msgs::Odometry::ConstPtr& odom_uav4);
+  std::mutex  mutex_odoms_;
+  std::map<std::string, nav_msgs::Odometry> odoms_;
+  bool has_odom_this_ = false;
+  void callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, const std::string uav_name);
+
 
   ros::Publisher           neigbor_pub_;
   std::string              this_uav_name_;
   std::vector<std::string> _uav_names_;
-  unsigned int             num_uavs_;
+  unsigned int             num_other_uavs_;
   unsigned int             this_uav_name_idx_;
 
   // | --------------------------- timer callbacks ----------------------------- |
+  
+  void       callbackTimerPubNeighbors(const ros::TimerEvent& event);
+  ros::Timer timer_pub_neighbors_;
 
   /* after start the swarming mode, the node will run for ($_duration_timer_experiment_) seconds */
   void       callbackTimerExperiment(const ros::TimerEvent& event);
