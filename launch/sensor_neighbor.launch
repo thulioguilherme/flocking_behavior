@@ -1,6 +1,7 @@
 <launch>
 
   <!-- defines name of the namespace of the drone -->
+  <arg name="UAV_NAME" default="$(env UAV_NAME)" />
   <arg name="RUN_TYPE" default="$(env RUN_TYPE)" />
 
   <arg name="simulation" default="true" />
@@ -19,10 +20,15 @@
   <arg unless="$(arg standalone)" name="nodelet_manager" value="$(arg manager)"/>
   <arg     if="$(arg standalone)" name="nodelet_manager" value=""/>
 
-  <node pkg="nodelet" type="nodelet" name="sensor_neighbor" args="$(arg nodelet) sensor_neighbor/SensorNeighbor $(arg nodelet_manager)" launch-prefix="$(arg launch_prefix_debug)" output="screen">
-	<!-- ROS parameters config file -->	
-	<rosparam file="$(find flocking)/config/uav_names.yaml" />
-	<rosparam file="$(find flocking)/config/experiment.yaml" />
-  </node>
+    <!-- Namespace -->
+  <group ns="$(arg UAV_NAME)">
+    <node pkg="nodelet" type="nodelet" name="sensor_neighbor" args="$(arg nodelet) sensor_neighbor/SensorNeighbor $(arg nodelet_manager)" launch-prefix="$(arg launch_prefix_debug)" output="screen">
+      <!-- ROS parameters config file -->
+      <param name="uav_name" value="$(arg UAV_NAME)" />
+
+      <rosparam file="$(find flocking)/config/uav_names.yaml" />
+      <rosparam file="$(find flocking)/config/experiment.yaml" />
+    </node>
+  </group>
 
 </launch>

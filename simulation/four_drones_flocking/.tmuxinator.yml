@@ -43,11 +43,11 @@ windows:
   - hover_mode:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForSimulation; history -s 'rosrun flocking send_command start_hover_mode uav1 uav2 uav3 uav4 uav5'
+        - export UAV_NAME=uav1; waitForSimulation; history -s 'rosrun flocking send_command start_hover_mode uav1 uav2 uav3 uav4'
   - swarming_mode:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForSimulation; history -s 'rosrun flocking send_command start_swarming_mode uav1 uav2 uav3 uav4 uav5'
+        - export UAV_NAME=uav1; waitForSimulation; history -s 'rosrun flocking send_command start_swarming_mode uav1 uav2 uav3 uav4'
   - takeoff:
       layout: tiled
       panes:
@@ -78,11 +78,14 @@ windows:
   - sensor_neighbor:
       layout: tiled
       panes:
-        - waitForRos; roslaunch flocking sensor_neighbor.launch
+        - export UAV_NAME=uav1; waitForRos; roslaunch flocking sensor_neighbor.launch
+        - export UAV_NAME=uav2; waitForRos; roslaunch flocking sensor_neighbor.launch
+        - export UAV_NAME=uav3; waitForRos; roslaunch flocking sensor_neighbor.launch
+        - export UAV_NAME=uav4; waitForRos; roslaunch flocking sensor_neighbor.launch
   - formation:
       layout: tiled
       panes:
-        - waitForRos; export UAV_NAME=uav1; roslaunch flocking formation.launch
-        - waitForRos; export UAV_NAME=uav2; roslaunch flocking formation.launch
-        - waitForRos; export UAV_NAME=uav3; roslaunch flocking formation.launch
-        - waitForRos; export UAV_NAME=uav4; roslaunch flocking formation.launch
+        - export UAV_NAME=uav1; waitForRos; roslaunch flocking formation.launch
+        - export UAV_NAME=uav2; waitForRos; roslaunch flocking formation.launch
+        - export UAV_NAME=uav3; waitForRos; roslaunch flocking formation.launch
+        - export UAV_NAME=uav4; waitForRos; roslaunch flocking formation.launch
