@@ -3,7 +3,7 @@
 
 namespace sensor_neighbor
 {
-
+  
 void SensorNeighbor::onInit() {
   /* set flags to false */
   is_initialized_ = false;

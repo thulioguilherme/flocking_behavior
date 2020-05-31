@@ -36,13 +36,13 @@ void CommandSender::onInit(){
 
   /* service clients */
   for(int i = 0; i < _flocking_command_list_.size(); i++){
-  	for(int j = 0; j < _uav_names_.size(); j++){
+    for(int j = 0; j < _uav_names_.size(); j++){
       if(_uav_names_[j] == _leader_name_){
         srv_client_uav_commands_.push_back(nh.serviceClient<std_srvs::Trigger>("/"+ _uav_names_[j] +"/waypoint_flier/"+ _leader_command_list_[i]));
       }else{
         srv_client_uav_commands_.push_back(nh.serviceClient<std_srvs::Trigger>("/"+ _uav_names_[j] +"/formation/"+ _flocking_command_list_[i]));
       }
-  	}
+    }
   }
 
   /* service servers */
@@ -61,8 +61,8 @@ void CommandSender::onInit(){
 /* callbackSendCommand() //{ */
 
 bool CommandSender::callbackSendCommand(mrs_msgs::SetInt::Request& req, mrs_msgs::SetInt::Response& res){
-	if (!is_initialized_) {
-		ROS_WARN("[CommandSender]: Cannot change to hover mode, nodelet is not initialized");
+  if (!is_initialized_) {
+    ROS_WARN("[CommandSender]: Cannot change to hover mode, nodelet is not initialized");
     res.message = "Cannot change to hover mode, nodelet is not initialized";
     res.success = false;
 
@@ -73,11 +73,11 @@ bool CommandSender::callbackSendCommand(mrs_msgs::SetInt::Request& req, mrs_msgs
 
   /* check if the index of the command is valid */
   if(index_command < 0 || index_command >= _flocking_command_list_.size()){
-  	ROS_WARN("[CommandSender]: The index of the requested command is out of bound");
-  	res.message = "The index of the requested command is out of bound";
-  	res.success = false;
+    ROS_WARN("[CommandSender]: The index of the requested command is out of bound");
+    res.message = "The index of the requested command is out of bound";
+    res.success = false;
 
-  	return true;
+    return true;
   }
 
   /* create new Trigger service message */
@@ -93,13 +93,13 @@ bool CommandSender::callbackSendCommand(mrs_msgs::SetInt::Request& req, mrs_msgs
 
     /* get name of the command */
     std::string command = (_uav_names_[i] == _leader_name_) ? _leader_command_list_[index_command] : _flocking_command_list_[index_command];
-  	
+
     /* call service */
     if(srv_client_uav_commands_[offset + i].call(srv_command_call)){
       ROS_INFO("[CommandSender]: Called service from %s using the command %s", _uav_names_[i].c_str(), command.c_str());
     }
   }
-  	
+  
   res.message = "Send the command to all UAVs";
   res.success = true;
 

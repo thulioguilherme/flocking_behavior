@@ -27,7 +27,7 @@ public:
 	virtual void onInit();
 
 private:
-	/* flags */
+  /* flags */
 	bool is_initialized_;
 	bool hover_mode_;
 	bool swarming_mode_;
