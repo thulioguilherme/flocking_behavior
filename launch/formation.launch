@@ -32,7 +32,6 @@
 
       <!-- ROS parameters config file -->
       <rosparam file="$(find flocking)/config/flocking/default.yaml" />
-      <rosparam file="$(find flocking)/config/experiment.yaml" />
 
       <!-- Load a user param file -->
       <rosparam if="$(eval not arg('custom_config') == '')" file="$(find flocking)/config/$(arg custom_config).yaml" />

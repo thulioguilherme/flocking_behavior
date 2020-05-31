@@ -17,13 +17,14 @@ void Formation::onInit() {
 
   mrs_lib::ParamLoader param_loader(nh, "Formation");
 
-  /* Load experiment parameters */
-  param_loader.loadParam("experiment/duration", _duration_timer_experiment_);
+  /* Load parameters */
   param_loader.loadParam("uav_name", _uav_name_);
   param_loader.loadParam("frame", _frame_);
   param_loader.loadParam("rate/publish_speed", _rate_timer_publisher_speed_);
   param_loader.loadParam("desired_height", _desired_height_);
   param_loader.loadParam("land_at_the_end", _land_end_);
+
+  param_loader.loadParam("flocking/duration", _duration_timer_flocking_);
 
   /* Load proximal control parameters */
   param_loader.loadParam("flocking/proximal/noise", _noise_);
@@ -60,11 +61,12 @@ void Formation::onInit() {
 
   /* Timers */
   timer_publisher_speed_ = nh.createTimer(ros::Rate(_rate_timer_publisher_speed_), &Formation::callbackTimerPublishSpeed, this, false, false);
-  timer_experiment_end_  = nh.createTimer(ros::Duration(_duration_timer_experiment_ + 1), &Formation::callbackTimerExperiment, this, false, false);
+  timer_flocking_end_  = nh.createTimer(ros::Duration(_duration_timer_flocking_), &Formation::callbackTimerFlocking, this, false, false);
 
   ROS_INFO_ONCE("[Formation]: initialized");
-
   is_initialized_ = true;
+
+  ros::spin();
 }
 
 //}
@@ -104,9 +106,9 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
 
 // | --------------------------- timer callbacks ----------------------------- |
 
-/* callbackTimerExperiment() //{ */
+/* callbackTimerFlocking() //{ */
 
-void Formation::callbackTimerExperiment(const ros::TimerEvent& event) {
+void Formation::callbackTimerFlocking([[maybe_unused]] const ros::TimerEvent& event) {
   /* turn off swarming mode (switch back to hover mode) */
   swarming_mode_ = false;
 
@@ -123,7 +125,7 @@ void Formation::callbackTimerExperiment(const ros::TimerEvent& event) {
     srv_client_land_.call(srv_land_call);
   }
 
-  ROS_INFO_ONCE("[Formation]: The experiment time is over. Shutting down");
+  ROS_INFO_ONCE("[Formation]: The time is over. Shutting down");
 
   /* shutdown node */
   ros::shutdown();
@@ -135,7 +137,7 @@ void Formation::callbackTimerExperiment(const ros::TimerEvent& event) {
 
 /* callbackTimerPublishSpeed() //{ */
 
-void Formation::callbackTimerPublishSpeed(const ros::TimerEvent& event) {
+void Formation::callbackTimerPublishSpeed([[maybe_unused]] const ros::TimerEvent& event) {
   if (!is_initialized_)
     return;
 
@@ -165,7 +167,7 @@ void Formation::callbackTimerPublishSpeed(const ros::TimerEvent& event) {
     speed_command.height       = _desired_height_;
 
     if (swarming_mode_) {
-      /* check if the swarming mode has a command */
+      /* check if the swarming mode has a speed command */
       std::scoped_lock lock(mutex_speed_);
       if (has_speed_command_) {
         speed_command.velocity.x = u_;
@@ -189,7 +191,7 @@ void Formation::callbackTimerPublishSpeed(const ros::TimerEvent& event) {
 
 /* callbackStartSwarmingMode() //{ */
 
-bool Formation::callbackStartHoverMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
+bool Formation::callbackStartHoverMode([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
   if (!is_initialized_) {
     ROS_WARN("[Formation]: Cannot change to hover mode, nodelet is not initialized");
     res.message = "Cannot change to hover mode, nodelet is not initialized";
@@ -215,7 +217,7 @@ bool Formation::callbackStartHoverMode(std_srvs::Trigger::Request& req, std_srvs
 
 /* callbackStartSwarmingMode() //{ */
 
-bool Formation::callbackStartSwarmingMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
+bool Formation::callbackStartSwarmingMode([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
   if (!is_initialized_) {
     res.message = "Cannot change to swarming mode, nodelet is not initialized";
     res.success = false;
@@ -247,10 +249,10 @@ bool Formation::callbackStartSwarmingMode(std_srvs::Trigger::Request& req, std_s
     /* change code to swarming mode */
     swarming_mode_ = true;
 
-    /* start experiment countdown */
-    timer_experiment_end_.start();
+    /* start flocking countdown */
+    timer_flocking_end_.start();
 
-    ROS_INFO("[Formation]: The experiment has started and will last %s seconds", std::to_string(_duration_timer_experiment_).c_str());
+    ROS_INFO("[Formation]: The flocking behavior has started and will last %s seconds", std::to_string(_duration_timer_flocking_).c_str());
 
     return true;
   } else {
@@ -266,7 +268,7 @@ bool Formation::callbackStartSwarmingMode(std_srvs::Trigger::Request& req, std_s
 
 /* callbackCloseNode() //{ */
 
-bool Formation::callbackCloseNode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
+bool Formation::callbackCloseNode([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
   if (!is_initialized_) {
     res.message = "Cannot stop formation, nodelet is not initialized";
     res.success = false;

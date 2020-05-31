@@ -6,11 +6,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fno-diagnostics-color")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   nodelet
-  rosbag
   nav_msgs
   mrs_msgs
   mrs_lib
-  message_filters
   message_generation
   std_msgs
 )
@@ -28,7 +26,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES Formation SensorNeighbor MathOperations
-  CATKIN_DEPENDS roscpp rosbag std_msgs nav_msgs mrs_lib mrs_msgs message_filters message_runtime
+  CATKIN_DEPENDS roscpp std_msgs nav_msgs mrs_lib mrs_msgs message_runtime
 )
 
 include_directories(

@@ -2,7 +2,7 @@
 <package format="2">
   <name>flocking</name>
   <version>0.1.0</version>
-  <description>Flocking</description>
+  <description>Flocking behavior package</description>
 
   <author email="thulioguilherme53@gmail.com">Thulio Amorim</author>
   <maintainer email="thulioguilherme53@gmail.com">Thulio Amorim</maintainer>
@@ -12,12 +12,10 @@
 
   <depend>roscpp</depend>
   <depend>nodelet</depend>
-  <depend>rosbag</depend>
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>mrs_lib</depend>
   <depend>mrs_msgs</depend>
-  <depend>message_filters</depend>
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
 

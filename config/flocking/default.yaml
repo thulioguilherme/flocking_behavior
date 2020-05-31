@@ -5,9 +5,12 @@ land_at_the_end: true
 desired_height: 1.8 # [m] 
 
 rate:
-  publish_speed: 15 # [Hz]
+  publish_speed: 2 # [Hz]
 
 flocking:
+
+  duration: 240 # [s]
+
   # Proximal control parameters
   proximal:
     desired_distance: 6.0 # [m]
@@ -16,6 +19,6 @@ flocking:
 
   # Magnitude-dependent motion control (MDMC) parameters
   MDMC:
-    K1: 1.0 # Linear speed gain
-    K2: 0.16 # Angular speed gain
-    move_forward: 0.10  # [m]
+    K1: 0.5 # Linear speed gain
+    K2: 0.08 # Angular speed gain
+    move_forward: 0.10  # [m/s]

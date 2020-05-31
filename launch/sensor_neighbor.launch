@@ -27,7 +27,6 @@
       <param name="uav_name" value="$(arg UAV_NAME)" />
 
       <rosparam file="$(find flocking)/config/uav_names.yaml" />
-      <rosparam file="$(find flocking)/config/experiment.yaml" />
     </node>
   </group>
 

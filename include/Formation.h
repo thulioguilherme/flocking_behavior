@@ -59,10 +59,10 @@ private:
 
 	// | --------------------------- timer callbacks ----------------------------- |
 	
-	/* after start the swarming mode, the node will run for ($_duration_timer_experiment_) seconds */
-	void callbackTimerExperiment(const ros::TimerEvent& event);
-	ros::Timer timer_experiment_end_;
-	int _duration_timer_experiment_;
+	/* after start the swarming mode, the node will run for ($_duration_timer_flocking_) seconds */
+	void callbackTimerFlocking(const ros::TimerEvent& event);
+	ros::Timer timer_flocking_end_;
+	int _duration_timer_flocking_;
 
 	/* publish speed tracker commands with a rate of ($_rate_timer_publisher_speed) Hz */
 	void callbackTimerPublishSpeed(const ros::TimerEvent& event);
