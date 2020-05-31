@@ -33,6 +33,7 @@ private:
 	bool callbackSendCommand(mrs_msgs::SetInt::Request& req, mrs_msgs::SetInt::Response& res);
 	ros::ServiceServer srv_server_send_command_;
 	std::vector<ros::ServiceClient> srv_client_uav_commands_;
+  
 };
 
 }  // namespace command_sender
