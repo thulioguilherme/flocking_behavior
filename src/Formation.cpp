@@ -82,7 +82,7 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
 
   if (neighbors->num_neighbors > 0) {
     double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_magnitude;
-    for (int i = 0; i < neighbors->num_neighbors; i++) {
+    for (unsigned int i = 0; i < neighbors->num_neighbors; i++) {
       if (neighbors->range[i] <= max_range_) {
         /* compute proximal control vector */
         prox_magnitude = Formation::getProximalMagnitude(neighbors->range[i]);
