@@ -17,7 +17,7 @@ void Formation::onInit() {
 
   mrs_lib::ParamLoader param_loader(nh, "Formation");
 
-  /* Load parameters */
+  /* load parameters */
   param_loader.loadParam("uav_name", _uav_name_);
   param_loader.loadParam("frame", _frame_);
   param_loader.loadParam("rate/publish_speed", _rate_timer_publisher_speed_);
@@ -26,7 +26,7 @@ void Formation::onInit() {
 
   param_loader.loadParam("flocking/duration", _duration_timer_flocking_);
 
-  /* Load proximal control parameters */
+  /* load proximal control parameters */
   param_loader.loadParam("flocking/proximal/noise", _noise_);
   param_loader.loadParam("flocking/proximal/desired_distance", _desired_distance_);
   param_loader.loadParam("flocking/proximal/strength_potential", _strength_potential_);
@@ -34,7 +34,7 @@ void Formation::onInit() {
   steepness_potential_ = log(2) / log(_desired_distance_ / _noise_);
   max_range_           = 1.8 * _desired_distance_;
 
-  /* Load motion control parameters */
+  /* load motion control parameters */
   param_loader.loadParam("flocking/MDMC/K1", _K1_);
   param_loader.loadParam("flocking/MDMC/K2", _K2_);
   param_loader.loadParam("flocking/MDMC/move_forward", _move_forward_);
@@ -44,22 +44,22 @@ void Formation::onInit() {
     ros::shutdown();
   }
 
-  /* Subscriber */
+  /* subscriber */
   sub_neighbors_info_ = nh.subscribe("/" + _uav_name_ + "/sensor_neighbor/neighbors", 1, &Formation::callbackUAVNeighbors, this);
 
-  /* Service client */
+  /* service client */
   srv_client_switcher_ = nh.serviceClient<mrs_msgs::String>("/" + _uav_name_ + "/control_manager/switch_tracker");
   srv_client_land_     = nh.serviceClient<std_srvs::Trigger>("/" + _uav_name_ + "/uav_manager/land");
 
-  /* Service servers */
+  /* service servers */
   srv_server_hover_mode_    = nh.advertiseService("start_hover_mode", &Formation::callbackStartHoverMode, this);
   srv_server_swarming_mode_ = nh.advertiseService("start_swarming_mode", &Formation::callbackStartSwarmingMode, this);
   srv_server_close_node_    = nh.advertiseService("close_node", &Formation::callbackCloseNode, this);
 
-  /* Publishers */
+  /* publishers */
   pub_speed_ = nh.advertise<mrs_msgs::SpeedTrackerCommand>("/" + _uav_name_ + "/control_manager/speed_tracker/command", 1);
 
-  /* Timers */
+  /* timers */
   timer_publisher_speed_ = nh.createTimer(ros::Rate(_rate_timer_publisher_speed_), &Formation::callbackTimerPublishSpeed, this, false, false);
   timer_flocking_end_  = nh.createTimer(ros::Duration(_duration_timer_flocking_), &Formation::callbackTimerFlocking, this, false, false);
 

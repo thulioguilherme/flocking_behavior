@@ -14,8 +14,8 @@ void SensorNeighbor::onInit() {
 
   mrs_lib::ParamLoader param_loader(nh, "SensorNeighbor");
 
-  /* Load UAVs names */
-  param_loader.loadParam("uav_name", this_uav_name_);
+  /* load UAVs names */
+  param_loader.loadParam("uav_name", _this_uav_name_);
   param_loader.loadParam("uav_names", _uav_names_);
 
   if (!param_loader.loadedSuccessfully()) {
@@ -23,33 +23,27 @@ void SensorNeighbor::onInit() {
     ros::shutdown();
   }
 
-  auto itr = std::find(_uav_names_.begin(), _uav_names_.end(), this_uav_name_);
+  auto itr = std::find(_uav_names_.begin(), _uav_names_.end(), _this_uav_name_);
   if (itr != _uav_names_.cend()) {
     this_uav_name_idx_ = std::distance(_uav_names_.begin(), itr);
   } else {
-    ROS_ERROR("UAV name %s is not in the list of all UAVs.", this_uav_name_.c_str());
+    ROS_ERROR("UAV name %s is not in the list of all UAVs.", _this_uav_name_.c_str());
     ros::shutdown();
   }
 
   num_other_uavs_ = _uav_names_.size() - 1;
 
-  /* Topics */
-  const std::string topic_name_1 =
-      _uav_names_[0] != this_uav_name_ ? "/" + _uav_names_[0] + "/odometry/slow_odom" : "/" + _uav_names_[0] + "/odometry/odom_main";
-  const std::string topic_name_2 =
-      _uav_names_[1] != this_uav_name_ ? "/" + _uav_names_[1] + "/odometry/slow_odom" : "/" + _uav_names_[1] + "/odometry/odom_main";
-  const std::string topic_name_3 =
-      _uav_names_[2] != this_uav_name_ ? "/" + _uav_names_[2] + "/odometry/slow_odom" : "/" + _uav_names_[2] + "/odometry/odom_main";
+  /* subscribers */
+  std::string topic_name;
+  for(int i = 0; i < _uav_names_.size(); i++){
+    topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
+    sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
+  }
   
-  /* Subscribers */
-  sub_odom_uav1_ = nh.subscribe<nav_msgs::Odometry>(topic_name_1, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[0]));
-  sub_odom_uav2_ = nh.subscribe<nav_msgs::Odometry>(topic_name_2, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[1]));
-  sub_odom_uav3_ = nh.subscribe<nav_msgs::Odometry>(topic_name_3, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[2]));
-  
-  /* Decentralization of this node (will be run on every unit independently) */
-  neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + this_uav_name_ + "/sensor_neighbor/neighbors", 1);
+  /* decentralization of this node (will be run on every unit independently) */
+  neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + _this_uav_name_ + "/sensor_neighbor/neighbors", 1);
 
-  /* Timers */
+  /* timers */
   timer_pub_neighbors_ = nh.createTimer(ros::Rate(5.0), &SensorNeighbor::callbackTimerPubNeighbors, this);
   
   ROS_INFO_ONCE("[SensorNeighbor]: initialized");
@@ -75,7 +69,7 @@ void SensorNeighbor::callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, c
       odoms_[uav_name] = *odom;
     }
   }
-  if (uav_name == this_uav_name_) {
+  if (uav_name == _this_uav_name_) {
     has_odom_this_ = true;
   }
 }
@@ -101,12 +95,12 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
   nav_msgs::Odometry odom_this;
   {
     std::scoped_lock lock(mutex_odoms_);
-    odom_this           = odoms_[this_uav_name_];
+    odom_this           = odoms_[_this_uav_name_];
     double heading_this = mrs_lib::AttitudeConverter(odom_this.pose.pose.orientation).getHeading();
 
     // compute relative info to all neighbors
     for (auto itr = odoms_.begin(); itr != odoms_.end(); ++itr) {
-      if (itr->first == this_uav_name_) {
+      if (itr->first == _this_uav_name_) {
         continue;
       }
 
@@ -131,7 +125,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
 
   /* only publish if have the information of all the others uavs */
   if(neighbor_info.range.size() == num_other_uavs_){
-    neighbor_info.header.frame_id = this_uav_name_ + "/local_origin";
+    neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
     neighbor_info.header.stamp    = now;
     neighbor_info.num_neighbors   = neighbor_info.range.size();
     neigbor_pub_.publish(neighbor_info);

@@ -25,7 +25,7 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES Formation SensorNeighbor MathOperations
+  LIBRARIES Formation SensorNeighbor CommandSender MathOperations
   CATKIN_DEPENDS roscpp std_msgs nav_msgs mrs_lib mrs_msgs message_runtime
 )
 
@@ -42,7 +42,8 @@ add_dependencies(SensorNeighbor ${catkin_EXPORTED_TARGETS})
 add_library(Formation src/Formation.cpp)
 add_dependencies(Formation ${catkin_EXPORTED_TARGETS})
 
-add_executable(send_command src/send_command.cpp)
+add_library(CommandSender src/CommandSender.cpp)
+add_dependencies(CommandSender ${catkin_EXPORTED_TARGETS})
 
 
 target_link_libraries(SensorNeighbor
@@ -51,10 +52,9 @@ target_link_libraries(SensorNeighbor
 )
 
 target_link_libraries(Formation
-  MathOperations
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(send_command
+target_link_libraries(CommandSender
   ${catkin_LIBRARIES}
 )

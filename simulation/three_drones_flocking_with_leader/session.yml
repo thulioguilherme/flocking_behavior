@@ -27,7 +27,7 @@ windows:
   - control:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general core.launch
+        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general core.launch config_constraint_manager:=./custom_configs/constraints.yaml
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general core.launch
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general core.launch
   - automatic_start:
@@ -39,7 +39,7 @@ windows:
   - command_sender:
       layout: tiled
       panes:
-        - waitForSimulation; roslaunch flocking command_sender.launch
+        - waitForSimulation; roslaunch flocking command_sender.launch config_uav_names:=./custom_configs/uav_names.yaml
   - hover_mode:
       layout: tiled
       panes:
@@ -52,6 +52,10 @@ windows:
       layout: tiled
       panes:
         - 'history -s rosservice call /command_sender/send_command \"value: 2\"'
+  - waypoint_flier:
+      layout: tiled
+      panes:
+        - export UAV_NAME=uav1; waitForControl; roslaunch waypoint_flier waypoint_flier.launch
   - takeoff:
       layout: tiled
       panes:
@@ -76,18 +80,15 @@ windows:
   - sensor_neighbor:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
   - formation:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
   - neighbors_topic:
       layout: tiled
       panes:
-        - waitForRos; rostopic echo /uav1/sensor_neighbor/neighbors
         - waitForRos; rostopic echo /uav2/sensor_neighbor/neighbors
         - waitForRos; rostopic echo /uav3/sensor_neighbor/neighbors

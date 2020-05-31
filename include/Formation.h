@@ -16,9 +16,6 @@
 
 #include <std_srvs/Trigger.h>
 
-/* custom library */
-#include <MathOperations.h>
-
 /* custom msg */
 #include <flocking/Neighbors.h>
 
@@ -45,12 +42,12 @@ private:
 	double max_range_;
 	double steepness_potential_;
 
-	// | --------- Magnitude-dependent motion control (MDMC) parameters ---------- |
+	// | --------- magnitude-dependent motion control (MDMC) parameters ---------- |
 
-	double _K1_; // Linear speed gain
-	double _K2_; // Angular speed gain
+	double _K1_; // linear speed gain
+	double _K2_; // angular speed gain
 	double _move_forward_;
-	double u_, w_; // Linear and angular speed
+	double u_, w_; // linear and angular speed
 
 	// | ------------------------- subscriber callbacks -------------------------- |
 	

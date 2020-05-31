@@ -9,3 +9,9 @@
     <description>SensorNeighbor nodelet</description>
   </class>
 </library>
+
+<library path="lib/libCommandSender">
+  <class name="command_sender/CommandSender" type="command_sender::CommandSender" base_class_type="nodelet::Nodelet">
+    <description>CommandSender nodelet</description>
+  </class>
+</library>

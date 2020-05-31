@@ -5,7 +5,7 @@
   <arg name="RUN_TYPE" default="$(env RUN_TYPE)" />
 
   <arg name="simulation" default="true" />
-  <arg name="custom_config" default="" />
+  <arg name="config_uav_names" default="" />
 
   <!-- will it run using GNU debugger? -->
   <arg name="DEBUG" default="false" />
@@ -14,30 +14,23 @@
 
   <!-- will it run as standalone nodelet or using a nodelet manager? -->
   <arg name="standalone" default="true" />
-  <arg name="manager" default="$(arg UAV_NAME)_flocking_manager" />
+  <arg name="manager" default="command_sender_manager" />
   <arg name="n_threads" default="8" />
   <arg unless="$(arg standalone)" name="nodelet" value="load"/>
   <arg     if="$(arg standalone)" name="nodelet" value="standalone"/>
   <arg unless="$(arg standalone)" name="nodelet_manager" value="$(arg manager)"/>
   <arg     if="$(arg standalone)" name="nodelet_manager" value=""/>
 
-  <!-- Namespace -->
-  <group ns="$(arg UAV_NAME)">
+  <node pkg="nodelet" type="nodelet" name="command_sender" args="$(arg nodelet) command_sender/CommandSender $(arg nodelet_manager)" launch-prefix="$(arg launch_prefix_debug)" output="screen">
+    <!-- ROS parameters config file -->
+    <param name="uav_name" value="$(arg UAV_NAME)" />
 
-    <node pkg="nodelet" type="nodelet" name="formation" args="$(arg nodelet) formation/Formation $(arg nodelet_manager)" launch-prefix="$(arg launch_prefix_debug)" output="screen">
+    <rosparam file="$(find flocking)/config/uav_names.yaml" />
+    <rosparam file="$(find flocking)/config/commands.yaml" />
 
-      <!-- Parameters loaded from launch file -->
-      <param name="simulation" value="$(eval arg('RUN_TYPE') == 'simulation')" />
-      <param name="uav_name" value="$(arg UAV_NAME)" />
+    <!-- Load a user param file -->
+    <rosparam if="$(eval not arg('config_uav_names') == '')" file="$(arg config_uav_names)" />
 
-      <!-- ROS parameters config file -->
-      <rosparam file="$(find flocking)/config/flocking/default.yaml" />
-
-      <!-- Load a user param file -->
-      <rosparam if="$(eval not arg('custom_config') == '')" file="$(arg custom_config)" />
-
-    </node>
-
-  </group>
+  </node>
 
 </launch>

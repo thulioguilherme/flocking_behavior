@@ -1,0 +1,7 @@
+leader_commands: [
+    None, start_waypoints_following, stop_waypoints_following,
+  ]
+
+flocking_commands: [
+    start_hover_mode, start_swarming_mode, close_node,
+  ]
