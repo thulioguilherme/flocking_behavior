@@ -36,7 +36,7 @@ private:
 
   unsigned int             num_other_uavs_;
   unsigned int             this_uav_name_idx_;
-  std::string              this_uav_name_;
+  std::string              _this_uav_name_;
   std::vector<std::string> _uav_names_;
   std::mutex  mutex_odoms_;
   std::map<std::string, nav_msgs::Odometry> odoms_;
@@ -47,6 +47,8 @@ private:
   ros::Subscriber sub_odom_uav1_;
   ros::Subscriber sub_odom_uav2_;
   ros::Subscriber sub_odom_uav3_;
+
+  std::vector<ros::Subscriber> sub_odom_uavs_;
 
   // | --------------------------- timer callbacks ----------------------------- |
   

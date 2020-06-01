@@ -16,9 +16,6 @@
 
 #include <std_srvs/Trigger.h>
 
-/* custom library */
-#include <MathOperations.h>
-
 /* custom msg */
 #include <flocking/Neighbors.h>
 
@@ -111,3 +108,4 @@ private:
 
 }  // namespace formation
 #endif
+

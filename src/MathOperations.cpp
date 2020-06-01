@@ -12,7 +12,7 @@ namespace math_operations{
 
 		return theta_rad;
 	}
-
+  
 	// [rad] -> [deg]
 	double thetaRad2Deg(double theta_rad){
 		double theta_deg;
