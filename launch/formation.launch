@@ -36,6 +36,9 @@
       <!-- Load a user param file -->
       <rosparam if="$(eval not arg('custom_config') == '')" file="$(find flocking)/config/$(arg custom_config).yaml" />
 
+      <!-- Services -->
+      <remap from="~start_state_machine_in" to="automatic_start/start" />
+
     </node>
 
   </group>
