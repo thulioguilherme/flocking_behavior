@@ -22,80 +22,90 @@
 namespace formation
 {
 
-class Formation : public nodelet::Nodelet{
+class Formation : public nodelet::Nodelet {
 public:
-	virtual void onInit();
+  virtual void onInit();
 
 private:
   /* flags */
-	bool is_initialized_;
-	bool hover_mode_;
-	bool swarming_mode_;
-	
-	std::string _uav_name_;
+  bool      is_initialized_;
+  bool      hover_mode_;
+  bool      swarming_mode_;
+  bool      state_machine_running_ = false;
+  ros::Time state_change_time_;
 
-	// | ---------------------- proximal control parameters ---------------------- |
+  std::string _uav_name_;
+  float       _timeout_state_change;
 
-	double _desired_distance_;
-	double _noise_;
-	double _strength_potential_;
-	double max_range_;
-	double steepness_potential_;
+  // | ---------------------- proximal control parameters ---------------------- |
 
-	// | --------- magnitude-dependent motion control (MDMC) parameters ---------- |
+  double _desired_distance_;
+  double _noise_;
+  double _strength_potential_;
+  double max_range_;
+  double steepness_potential_;
 
-	double _K1_; // linear speed gain
-	double _K2_; // angular speed gain
-	double _move_forward_;
-	double u_, w_; // linear and angular speed
+  // | --------- Magnitude-dependent motion control (MDMC) parameters ---------- |
 
-	// | ------------------------- subscriber callbacks -------------------------- |
-	
-	void callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors);
-	ros::Subscriber sub_neighbors_info_;
+  double _K1_;  // Linear speed gain
+  double _K2_;  // Angular speed gain
+  double _move_forward_;
+  double u_, w_;  // Linear and angular speed
 
-	// | --------------------------- timer callbacks ----------------------------- |
-	
-	/* after start the swarming mode, the node will run for ($_duration_timer_flocking_) seconds */
-	void callbackTimerFlocking(const ros::TimerEvent& event);
-	ros::Timer timer_flocking_end_;
-	int _duration_timer_flocking_;
+  // | ------------------------- subscriber callbacks -------------------------- |
 
-	/* publish speed tracker commands with a rate of ($_rate_timer_publisher_speed) Hz */
-	void callbackTimerPublishSpeed(const ros::TimerEvent& event);
-	bool has_speed_command_;
-	ros::Timer timer_publisher_speed_;
-	ros::Publisher pub_speed_;
-	std::mutex mutex_speed_;
-	int _rate_timer_publisher_speed_;
-	std::string _frame_;
-	double _desired_height_;
-	
-	// | ------------------------ service clients callbacks ---------------------- |
-	
-	ros::ServiceClient srv_client_switcher_;
+  void            callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors);
+  ros::Subscriber sub_neighbors_info_;
 
-	ros::ServiceClient srv_client_land_;
-	bool _land_end_;
+  // | --------------------------- timer callbacks ----------------------------- |
 
-	// | ------------------------ service server callbacks ----------------------- |
+  /* after start the swarming mode, the node will run for ($_duration_timer_flocking_) seconds */
+  void       callbackTimerAbortFlocking(const ros::TimerEvent& event);
+  ros::Timer timer_flocking_end_;
+  int        _duration_timer_flocking_;
 
-	/* switch code from "no" mode to hover mode */
-	bool callbackStartHoverMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
-	ros::ServiceServer srv_server_hover_mode_;
+  /* publish speed tracker commands with a rate of ($_rate_timer_publisher_speed) Hz */
+  void           callbackTimerStateMachine(const ros::TimerEvent& event);
+  void           callbackTimerPublishSpeed(const ros::TimerEvent& event);
+  bool           has_speed_command_;
+  ros::Timer     timer_publisher_speed_;
+  ros::Timer     timer_state_machine_;
+  ros::Publisher pub_speed_;
+  std::mutex     mutex_speed_;
+  int            _rate_timer_publisher_speed_;
+  std::string    _frame_;
+  double         _desired_height_;
 
-	/* switch code from hover mode to swarming mode */
-	bool callbackStartSwarmingMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
-	ros::ServiceServer srv_server_swarming_mode_;
-	
-	/* shutdown node - use in case of emergency */
-	bool callbackCloseNode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
-	ros::ServiceServer srv_server_close_node_;
+  // | ------------------------ service clients callbacks ---------------------- |
 
-	// | -------------------------- support functions ---------------------------- |
-	
-	double getProximalMagnitude(double range);
-}; 
+  ros::ServiceClient srv_client_switcher_;
 
-} // namespace formation
+  ros::ServiceClient srv_client_land_;
+  bool               _land_end_;
+
+  // | ------------------------ service server callbacks ----------------------- |
+
+  /* start state machine (trigger hover now and wait #s timeout for swarm mode) */
+  bool               callbackStartStateMachine(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
+  ros::ServiceServer srv_server_state_machine_;
+
+  /* switch code from "no" mode to hover mode */
+  bool               callbackStartHoverMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
+  ros::ServiceServer srv_server_hover_mode_;
+
+  /* switch code from hover mode to swarming mode */
+  bool               callbackStartSwarmingMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
+  ros::ServiceServer srv_server_swarming_mode_;
+
+  /* shutdown node - use in case of emergency */
+  bool               callbackCloseNode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
+  ros::ServiceServer srv_server_close_node_;
+
+  // | -------------------------- support functions ---------------------------- |
+
+  double getProximalMagnitude(double range);
+};
+
+}  // namespace formation
 #endif
+

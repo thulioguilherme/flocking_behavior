@@ -9,6 +9,7 @@ rate:
 
 flocking:
 
+  swarming_after_hover: 5 # [s]
   duration: 240 # [s]
 
   # Proximal control parameters

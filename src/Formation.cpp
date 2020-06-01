@@ -24,6 +24,7 @@ void Formation::onInit() {
   param_loader.loadParam("desired_height", _desired_height_);
   param_loader.loadParam("land_at_the_end", _land_end_);
 
+  param_loader.loadParam("flocking/swarming_after_hover", _timeout_state_change);
   param_loader.loadParam("flocking/duration", _duration_timer_flocking_);
 
   /* load proximal control parameters */
@@ -52,6 +53,7 @@ void Formation::onInit() {
   srv_client_land_     = nh.serviceClient<std_srvs::Trigger>("/" + _uav_name_ + "/uav_manager/land");
 
   /* service servers */
+  srv_server_state_machine_ = nh.advertiseService("start_state_machine_in", &Formation::callbackStartStateMachine, this);
   srv_server_hover_mode_    = nh.advertiseService("start_hover_mode", &Formation::callbackStartHoverMode, this);
   srv_server_swarming_mode_ = nh.advertiseService("start_swarming_mode", &Formation::callbackStartSwarmingMode, this);
   srv_server_close_node_    = nh.advertiseService("close_node", &Formation::callbackCloseNode, this);
@@ -60,8 +62,9 @@ void Formation::onInit() {
   pub_speed_ = nh.advertise<mrs_msgs::SpeedTrackerCommand>("/" + _uav_name_ + "/control_manager/speed_tracker/command", 1);
 
   /* timers */
+  timer_state_machine_   = nh.createTimer(ros::Duration(_timeout_state_change), &Formation::callbackTimerStateMachine, this, true, false);
   timer_publisher_speed_ = nh.createTimer(ros::Rate(_rate_timer_publisher_speed_), &Formation::callbackTimerPublishSpeed, this, false, false);
-  timer_flocking_end_  = nh.createTimer(ros::Duration(_duration_timer_flocking_), &Formation::callbackTimerFlocking, this, false, false);
+  timer_flocking_end_    = nh.createTimer(ros::Duration(_duration_timer_flocking_), &Formation::callbackTimerAbortFlocking, this, false, false);
 
   ROS_INFO_ONCE("[Formation]: initialized");
   is_initialized_ = true;
@@ -82,7 +85,7 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
 
   if (neighbors->num_neighbors > 0) {
     double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_magnitude;
-    for (int i = 0; i < neighbors->num_neighbors; i++) {
+    for (unsigned int i = 0; i < neighbors->num_neighbors; i++) {
       if (neighbors->range[i] <= max_range_) {
         /* compute proximal control vector */
         prox_magnitude = Formation::getProximalMagnitude(neighbors->range[i]);
@@ -106,9 +109,41 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
 
 // | --------------------------- timer callbacks ----------------------------- |
 
-/* callbackTimerFlocking() //{ */
+/* callbackTimerStateMachine() //{ */
 
-void Formation::callbackTimerFlocking([[maybe_unused]] const ros::TimerEvent& event) {
+void Formation::callbackTimerStateMachine([[maybe_unused]] const ros::TimerEvent& event) {
+  if (!is_initialized_ || !state_machine_running_) {
+    return;
+  }
+
+  ros::Time now = ros::Time::now();
+  if (hover_mode_) {
+    /* create new String message */
+    mrs_msgs::String srv_switch_msg;
+    srv_switch_msg.request.value = "SpeedTracker";
+
+    /* request tracker change to SpeedTracker */
+    if (srv_client_switcher_.call(srv_switch_msg)) {
+      // switch to swarming mode
+      ROS_INFO("[Formation]: Changed to SpeedTracker. Starting the swarming mode, which will last %d seconds.", _duration_timer_flocking_);
+
+      state_change_time_ = now;
+      /* hover_mode_        = false; */
+      swarming_mode_     = true;
+
+      /* start flocking countdown */
+      timer_flocking_end_.start();
+    } else {
+      ROS_WARN("[Formation]: Could not call switch tracker service to change to swarming mode. Change the modes manually.");
+    }
+  }
+}
+
+//}
+
+/* callbackTimerAbortFlocking() //{ */
+
+void Formation::callbackTimerAbortFlocking([[maybe_unused]] const ros::TimerEvent& event) {
   /* turn off swarming mode (switch back to hover mode) */
   swarming_mode_ = false;
 
@@ -189,14 +224,57 @@ void Formation::callbackTimerPublishSpeed([[maybe_unused]] const ros::TimerEvent
 
 // | ----------------------- service server callbacks ----------------------- |
 
-/* callbackStartSwarmingMode() //{ */
+/* callbackStartStateMachine() //{ */
+
+bool Formation::callbackStartStateMachine([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
+  if (!is_initialized_) {
+    ROS_WARN("[Formation]: Cannot start state machine, nodelet is not initialized.");
+    res.message = "Cannot change to hover mode, nodelet is not initialized.";
+    res.success = false;
+    return false;
+  } else if (hover_mode_) {
+    ROS_WARN("[Formation]: Cannot start state machine, already in hover mode.");
+    res.message = "Cannot start state machine, already in hover mode.";
+    res.success = false;
+    return false;
+  } else if (swarming_mode_) {
+    ROS_WARN("[Formation]: Cannot start state machine, already in swarming mode.");
+    res.message = "Cannot start state machine, already in swarming mode.";
+    res.success = false;
+    return false;
+  }
+
+  /* change code to hover mode */
+  hover_mode_            = true;
+  state_change_time_     = ros::Time::now();
+  state_machine_running_ = true;
+
+  timer_state_machine_.start();
+
+  /* start publishing speed commands */
+  timer_publisher_speed_.start();
+
+  ROS_INFO("[Formation]: Changed to hover mode. Swarming mode will be activated in %0.2f seconds.", _timeout_state_change);
+  res.message = "Changed to hover mode. Swarming mode will be activated in specified timeout.";
+  res.success = true;
+
+  return true;
+}
+
+//}
+
+/* callbackStartHoverMode() //{ */
 
 bool Formation::callbackStartHoverMode([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
   if (!is_initialized_) {
     ROS_WARN("[Formation]: Cannot change to hover mode, nodelet is not initialized");
     res.message = "Cannot change to hover mode, nodelet is not initialized";
     res.success = false;
-
+    return false;
+  } else if (state_machine_running_) {
+    ROS_WARN("[Formation]: Cannot change to hover mode. The states are handled by a state machine.");
+    res.message = "Cannot change to hover mode. The states are handled by a state machine.";
+    res.success = false;
     return false;
   }
 
@@ -225,14 +303,15 @@ bool Formation::callbackStartSwarmingMode([[maybe_unused]] std_srvs::Trigger::Re
     ROS_WARN("[Formation]: cannot change to swarming mode, nodelet is not initialized");
 
     return false;
-  }
-
-  /* can only change to swarming mode if the code is on hover mode */
-  if (!hover_mode_) {
+  } else if (state_machine_running_) {
+    ROS_WARN("[Formation]: Cannot change to swarming mode. The states are handled by a state machine.");
+    res.message = "Cannot change to swarming mode. The states are handled by a state machine.";
+    res.success = false;
+    return false;
+  } else if (!hover_mode_) {
     ROS_WARN("[Formation]: Cannot change to swarming mode, hover mode has not been started");
     res.message = "Cannot change to swarming mode, hover mode has not been started";
     res.success = false;
-
     return false;
   }
 
@@ -247,6 +326,7 @@ bool Formation::callbackStartSwarmingMode([[maybe_unused]] std_srvs::Trigger::Re
     res.success = true;
 
     /* change code to swarming mode */
+    /* hover_mode_    = false; */
     swarming_mode_ = true;
 
     /* start flocking countdown */
@@ -270,12 +350,15 @@ bool Formation::callbackStartSwarmingMode([[maybe_unused]] std_srvs::Trigger::Re
 
 bool Formation::callbackCloseNode([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
   if (!is_initialized_) {
+    ROS_WARN("[Formation]: Cannot stop formation, nodelet is not initialized");
     res.message = "Cannot stop formation, nodelet is not initialized";
     res.success = false;
-
-    ROS_WARN("[Formation]: Cannot stop formation, nodelet is not initialized");
-
-    return true;
+    return false;
+  } else if (state_machine_running_) {
+    ROS_WARN("[Formation]: Cannot close node. The states are handled by a state machine.");
+    res.message = "Cannot close node. The states are handled by a state machine.";
+    res.success = false;
+    return false;
   }
 
   /* turn off swarming mode (switch back to hover mode) */
