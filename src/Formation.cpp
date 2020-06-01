@@ -128,7 +128,7 @@ void Formation::callbackTimerStateMachine([[maybe_unused]] const ros::TimerEvent
       ROS_INFO("[Formation]: Changed to SpeedTracker. Starting the swarming mode, which will last %d seconds.", _duration_timer_flocking_);
 
       state_change_time_ = now;
-      hover_mode_        = false;
+      /* hover_mode_        = false; */
       swarming_mode_     = true;
 
       /* start flocking countdown */
@@ -326,7 +326,7 @@ bool Formation::callbackStartSwarmingMode([[maybe_unused]] std_srvs::Trigger::Re
     res.success = true;
 
     /* change code to swarming mode */
-    hover_mode_    = false;
+    /* hover_mode_    = false; */
     swarming_mode_ = true;
 
     /* start flocking countdown */
