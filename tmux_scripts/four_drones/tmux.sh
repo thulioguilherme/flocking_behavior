@@ -28,7 +28,7 @@ pre_input="mkdir -p $MAIN_DIR/$PROJECT_NAME"
 input=(
   'Rosbag' 'waitForOffboard; rosrun mrs_uav_general record.sh
 '
-  'Nimbro' 'waitForRos; roslaunch mrs_uav_general nimbro.launch custom_config_uav_names:=uav_names.yaml
+  'Nimbro' 'waitForRos; roslaunch mrs_uav_general nimbro.launch custom_config_uav_names:=./custom_configs/uav_names_nimbro.yaml
 '
   'Sensors' 'waitForRos; roslaunch mrs_uav_general sensors.launch
 '
@@ -36,11 +36,11 @@ input=(
 '
   'Control' 'waitForRos; roslaunch mrs_uav_general core.launch
 '
-  'AutoStart' 'waitForRos; roslaunch mrs_uav_general automatic_start.launch
+  'AutoStart' 'waitForRos; roslaunch mrs_uav_general automatic_start.launch custom_config:=./custom_configs/automatic_start.yaml
 '
-  'Flocking-formation' 'waitForOdometry; roslaunch flocking formation.launch
+  'Flocking-formation' 'waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
 '
-  'Flocking-relative_localization' 'waitForOdometry; roslaunch flocking sensor_neighbor.launch
+  'Flocking-relative_localization' 'waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names_flocking.yaml
 '
   'slow_odom' 'waitForRos; rostopic echo /'"$UAV_NAME"'/odometry/slow_odom
 '

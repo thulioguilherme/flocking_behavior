@@ -3,7 +3,7 @@
 
 namespace sensor_neighbor
 {
-  
+
 void SensorNeighbor::onInit() {
   /* set flags to false */
   is_initialized_ = false;
@@ -35,17 +35,17 @@ void SensorNeighbor::onInit() {
 
   /* subscribers */
   std::string topic_name;
-  for(int i = 0; i < _uav_names_.size(); i++){
+  for (unsigned int i = 0; i < _uav_names_.size(); i++) {
     topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
     sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
   }
-  
+
   /* decentralization of this node (will be run on every unit independently) */
   neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + _this_uav_name_ + "/sensor_neighbor/neighbors", 1);
 
   /* timers */
   timer_pub_neighbors_ = nh.createTimer(ros::Rate(5.0), &SensorNeighbor::callbackTimerPubNeighbors, this);
-  
+
   ROS_INFO_ONCE("[SensorNeighbor]: initialized");
   is_initialized_ = true;
 
@@ -124,7 +124,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
   }
 
   /* only publish if have the information of all the others uavs */
-  if(neighbor_info.range.size() == num_other_uavs_){
+  if (neighbor_info.range.size() == num_other_uavs_) {
     neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
     neighbor_info.header.stamp    = now;
     neighbor_info.num_neighbors   = neighbor_info.range.size();
