@@ -42,18 +42,6 @@ windows:
         - waitForOdometry; history -s 'rosservice call /uav1/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav2/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav3/automatic_start/start'
-  - hover_mode:
-      layout: tiled
-      panes:
-        - export UAV_NAME=uav1; waitForOdometry; history -s 'rosrun flocking send_command start_hover_mode 0 uav1 uav2 uav3'
-  - swarming_mode:
-      layout: tiled
-      panes:
-        - export UAV_NAME=uav1; waitForOdometry; history -s 'rosrun flocking send_command start_swarming_mode 0 uav1 uav2 uav3'
-  - emergency_mode:
-      layout: tiled
-      panes:
-        - export UAV_NAME=uav1; waitForOdometry; history -s 'rosrun flocking send_command close_node 0 uav1 uav2 uav3'
   - command_sender:
       layout: tiled
       panes:
