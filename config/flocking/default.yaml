@@ -16,7 +16,7 @@ flocking:
   proximal:
     desired_distance: 6.0 # [m]
     noise: 0.1
-    strength_potential: 64.0
+    strength_potential: 600.0
 
   # Magnitude-dependent motion control (MDMC) parameters
   MDMC:

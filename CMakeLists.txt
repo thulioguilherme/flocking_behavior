@@ -45,7 +45,6 @@ add_dependencies(Formation ${catkin_EXPORTED_TARGETS})
 add_library(CommandSender src/CommandSender.cpp)
 add_dependencies(CommandSender ${catkin_EXPORTED_TARGETS})
 
-
 target_link_libraries(SensorNeighbor
   MathOperations
   ${catkin_LIBRARIES}
