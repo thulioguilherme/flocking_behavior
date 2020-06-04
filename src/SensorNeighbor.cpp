@@ -105,7 +105,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
       }
 
       // Check if we have new messages (slow_odom runs at 2Hz, so we give it small reserve)
-      if ((now - itr->second.header.stamp).toSec() < 1.0) {
+      if ((now - itr->second.header.stamp).toSec() < 2.0) {
 
         // If you search for the "bearing", the "yaw" is not what you "want".
         // ROS uses the extrinsic RPY convention, so the yawing is the last rotation and it happens around the world z-axis.
