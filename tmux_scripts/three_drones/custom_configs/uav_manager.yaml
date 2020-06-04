@@ -1,0 +1,6 @@
+takeoff:
+
+  after_takeoff:
+    controller: "So3Controller"
+
+  takeoff_height: 2.0
