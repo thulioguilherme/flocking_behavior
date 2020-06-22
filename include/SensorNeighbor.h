@@ -38,23 +38,19 @@ private:
   unsigned int             this_uav_name_idx_;
   std::string              _this_uav_name_;
   std::vector<std::string> _uav_names_;
-  std::mutex  mutex_odoms_;
+  std::mutex               mutex_odoms_;
   std::map<std::string, nav_msgs::Odometry> odoms_;
 
   // | ------------------------ subscriber callbacks --------------------------- |
 
   void callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, const std::string uav_name);
-  ros::Subscriber sub_odom_uav1_;
-  ros::Subscriber sub_odom_uav2_;
-  ros::Subscriber sub_odom_uav3_;
-
   std::vector<ros::Subscriber> sub_odom_uavs_;
 
   // | --------------------------- timer callbacks ----------------------------- |
   
-  void       callbackTimerPubNeighbors(const ros::TimerEvent& event);
-  ros::Timer timer_pub_neighbors_;
-  ros::Publisher  neigbor_pub_;
+  void           callbackTimerPubNeighbors(const ros::TimerEvent& event);
+  ros::Timer     timer_pub_neighbors_;
+  ros::Publisher neigbor_pub_;
 
 };
 

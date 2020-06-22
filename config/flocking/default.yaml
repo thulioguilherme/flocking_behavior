@@ -1,25 +1,23 @@
-frame: "fcu_untilted"
+frame: "gps_origin"
 
 land_at_the_end: true
 
 desired_height: 1.8 # [m] 
 
-rate:
-  publish_speed: 2 # [Hz]
-
 flocking:
-
-  swarming_after_hover: 5 # [s]
-  duration: 240 # [s]
+  # Experiment parameters
+  auto_start: true
+  swarming_after_hover: 10 # [s]
+  duration: 120 # [s]
 
   # Proximal control parameters
   proximal:
     desired_distance: 6.0 # [m]
     noise: 0.1
-    strength_potential: 600.0
+    strength_potential: 850.0
 
-  # Magnitude-dependent motion control (MDMC) parameters
-  MDMC:
-    K1: 0.5 # Linear speed gain
-    K2: 0.08 # Angular speed gain
-    move_forward: 0.10  # [m/s]
+  # Motion control parameters
+  motion:
+    K1: 0.5 # Linear gain
+    K2: 0.12 # Angular gain
+    move_forward: 0.20  # 

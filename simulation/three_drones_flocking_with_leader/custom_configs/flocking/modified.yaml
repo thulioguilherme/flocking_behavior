@@ -1,10 +1,4 @@
 flocking:
 
-  # Proximal control parameters
-  proximal:
-    strength_potential: 128.0
-
-  # Magnitude-dependent motion control (MDMC) parameters
-  MDMC:
-    K1: 1.0 # Linear speed gain
-    K2: 0.12 # Angular speed gain
+  auto_start: false
+  duration: 160

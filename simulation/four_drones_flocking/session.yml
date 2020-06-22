@@ -100,10 +100,10 @@ windows:
   - formation:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch
+        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch
   - neighbors_topic:
       layout: tiled
       panes:
