@@ -19,5 +19,5 @@ flocking:
   # Motion control parameters
   motion:
     K1: 0.5 # Linear gain
-    K2: 0.12 # Angular gain
+    K2: 0.1 # Angular gain
     move_forward: 0.20  # 

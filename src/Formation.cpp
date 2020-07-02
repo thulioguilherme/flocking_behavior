@@ -102,21 +102,20 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
     mrs_msgs::ReferenceStampedSrv srv_reference_stamped_msg;
 
     /* fill in header */
-    srv_reference_stamped_msg.request.header.stamp = ros::Time::now();
-    srv_reference_stamped_msg.request.header.frame_id = _uav_name_ + "/" + _frame_;  
-
+    srv_reference_stamped_msg.request.header.stamp    = ros::Time::now();
+    srv_reference_stamped_msg.request.header.frame_id = _uav_name_ + "/" + _frame_;
 
     /* fill in reference */
     double heading = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
     srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + cos(heading) * u;
     srv_reference_stamped_msg.request.reference.position.y = odom->pose.pose.position.y + sin(heading) * u;
-    srv_reference_stamped_msg.request.reference.position.z = odom->pose.pose.position.z;
+    srv_reference_stamped_msg.request.reference.position.z = _desired_height_;
     srv_reference_stamped_msg.request.reference.heading    = heading + w;
 
-    /* request service */ 
-    if (srv_client_goto_.call(srv_reference_stamped_msg)){ 
-      
-    }else{
+    /* request service */
+    if (srv_client_goto_.call(srv_reference_stamped_msg)) {
+    
+    } else {
       ROS_ERROR("Failed to call service.\n");
     }
 

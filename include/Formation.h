@@ -63,10 +63,9 @@ private:
   message_filters::Subscriber<flocking::Neighbors> sub_neighbors_info_;
   message_filters::Subscriber<nav_msgs::Odometry>  sub_odom_;
 
-  void callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom);
+  void        callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom);
   std::string _frame_;
   double      _desired_height_;
-
   
   // | --------------------------- timer callbacks ----------------------------- |
 

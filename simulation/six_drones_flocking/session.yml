@@ -33,12 +33,12 @@ windows:
   - control:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general core.launch
-        - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general core.launch
-        - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general core.launch
-        - export UAV_NAME=uav4; waitForSimulation; roslaunch mrs_uav_general core.launch
-        - export UAV_NAME=uav5; waitForSimulation; roslaunch mrs_uav_general core.launch
-        - export UAV_NAME=uav6; waitForSimulation; roslaunch mrs_uav_general core.launch
+        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
+        - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
+        - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
+        - export UAV_NAME=uav4; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
+        - export UAV_NAME=uav5; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
+        - export UAV_NAME=uav6; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
   - automatic_start:
       layout: tiled
       panes:
