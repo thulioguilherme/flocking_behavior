@@ -35,7 +35,7 @@ void SensorNeighbor::onInit() {
 
   /* subscribers */
   std::string topic_name;
-  for (unsigned int i = 0; i < _uav_names_.size(); i++) {
+  for (int i = 0; i < _uav_names_.size(); i++) {
     topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
     sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
   }
@@ -57,10 +57,10 @@ void SensorNeighbor::onInit() {
 /* callbackUAVOdom() //{ */
 
 void SensorNeighbor::callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, const std::string uav_name) {
-
   if (!is_initialized_) {
     return;
   }
+
   {
     std::scoped_lock lock(mutex_odoms_);
     if (odoms_.find(uav_name) == odoms_.end()) {
@@ -69,6 +69,7 @@ void SensorNeighbor::callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, c
       odoms_[uav_name] = *odom;
     }
   }
+
   if (uav_name == _this_uav_name_) {
     has_odom_this_ = true;
   }
@@ -90,7 +91,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
   /* create new neigbors message */
   flocking::Neighbors neighbor_info;
 
-  // get odometry of this UAV
+  /* get odometry of this UAV */
   ros::Time          now = ros::Time::now();
   nav_msgs::Odometry odom_this;
   {
@@ -98,20 +99,13 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
     odom_this           = odoms_[_this_uav_name_];
     double heading_this = mrs_lib::AttitudeConverter(odom_this.pose.pose.orientation).getHeading();
 
-    // compute relative info to all neighbors
+    /* compute relative info to all neighbors */
     for (auto itr = odoms_.begin(); itr != odoms_.end(); ++itr) {
       if (itr->first == _this_uav_name_) {
         continue;
       }
 
-      // Check if we have new messages (slow_odom runs at 2Hz, so we give it small reserve)
-      if ((now - itr->second.header.stamp).toSec() < 2.0) {
-
-        // If you search for the "bearing", the "yaw" is not what you "want".
-        // ROS uses the extrinsic RPY convention, so the yawing is the last rotation and it happens around the world z-axis.
-        // That means that yaw=0 does not mean anything special, both the body-X and body-Y axis can have arbitrary heading depending on pitch and roll.
-        // Ofc, this is "negligable" for small tilts, but its good to know.
-        // I recommend to use the "heading", in our case defined as the azimuth of the body-x axis, i.e., atan2(by, bx)
+      if ((now - itr->second.header.stamp).toSec() < 1.0) {
         double x = itr->second.pose.pose.position.x;
         double y = itr->second.pose.pose.position.y;
 
@@ -128,6 +122,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
     neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
     neighbor_info.header.stamp    = now;
     neighbor_info.num_neighbors   = neighbor_info.range.size();
+
     neigbor_pub_.publish(neighbor_info);
   }
 }

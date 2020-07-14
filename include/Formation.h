@@ -5,19 +5,25 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <nodelet/nodelet.h>
-#include <mutex>
 
 #include <mrs_lib/param_loader.h>
+#include <mrs_lib/attitude_converter.h>
 
 #include <mrs_msgs/String.h>
-#include <mrs_msgs/SpeedTrackerCommand.h>
-
-#include <std_msgs/Header.h>
+#include <mrs_msgs/ReferenceStampedSrv.h>
 
 #include <std_srvs/Trigger.h>
 
+#include <nav_msgs/Odometry.h>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 /* custom msg */
 #include <flocking/Neighbors.h>
+
+using namespace message_filters;
 
 namespace formation
 {
@@ -28,14 +34,11 @@ public:
 
 private:
   /* flags */
-  bool      is_initialized_;
-  bool      hover_mode_;
-  bool      swarming_mode_;
-  bool      state_machine_running_ = false;
-  ros::Time state_change_time_;
+  bool is_initialized_;
+  bool hover_mode_;
+  bool swarming_mode_;
 
   std::string _uav_name_;
-  float       _timeout_state_change;
 
   // | ---------------------- proximal control parameters ---------------------- |
 
@@ -50,36 +53,36 @@ private:
   double _K1_;  // Linear speed gain
   double _K2_;  // Angular speed gain
   double _move_forward_;
-  double u_, w_;  // Linear and angular speed
 
-  // | ------------------------- subscriber callbacks -------------------------- |
+  // | ----------------------- message filters callbacks ----------------------- |
+  
+  typedef sync_policies::ApproximateTime<flocking::Neighbors, nav_msgs::Odometry> FormationPolicy;
+  typedef Synchronizer<FormationPolicy> Sync;
+  boost::shared_ptr<Sync> sync_;
+  
+  message_filters::Subscriber<flocking::Neighbors> sub_neighbors_info_;
+  message_filters::Subscriber<nav_msgs::Odometry>  sub_odom_;
 
-  void            callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors);
-  ros::Subscriber sub_neighbors_info_;
-
+  void        callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom);
+  std::string _frame_;
+  double      _desired_height_;
+  
   // | --------------------------- timer callbacks ----------------------------- |
 
-  /* after start the swarming mode, the node will run for ($_duration_timer_flocking_) seconds */
+  /* after start the swarming mode, the node will run for ($_timeout_flocking_) seconds */
   void       callbackTimerAbortFlocking(const ros::TimerEvent& event);
   ros::Timer timer_flocking_end_;
-  int        _duration_timer_flocking_;
+  double     _timeout_flocking_;
 
-  /* publish speed tracker commands with a rate of ($_rate_timer_publisher_speed) Hz */
-  void           callbackTimerStateMachine(const ros::TimerEvent& event);
-  void           callbackTimerPublishSpeed(const ros::TimerEvent& event);
-  bool           has_speed_command_;
-  ros::Timer     timer_publisher_speed_;
-  ros::Timer     timer_state_machine_;
-  ros::Publisher pub_speed_;
-  std::mutex     mutex_speed_;
-  int            _rate_timer_publisher_speed_;
-  std::string    _frame_;
-  double         _desired_height_;
+  void       callbackTimerStateMachine(const ros::TimerEvent& event);
+  ros::Timer timer_state_machine_;
+  ros::Time  state_change_time_;
+  bool       state_machine_running_;
+  double     _timeout_state_change_;
 
   // | ------------------------ service clients callbacks ---------------------- |
 
-  ros::ServiceClient srv_client_switcher_;
-
+  ros::ServiceClient srv_client_goto_;
   ros::ServiceClient srv_client_land_;
   bool               _land_end_;
 
@@ -88,6 +91,7 @@ private:
   /* start state machine (trigger hover now and wait #s timeout for swarm mode) */
   bool               callbackStartStateMachine(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
   ros::ServiceServer srv_server_state_machine_;
+  bool               _auto_start_;
 
   /* switch code from "no" mode to hover mode */
   bool               callbackStartHoverMode(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
