@@ -35,7 +35,7 @@ void SensorNeighbor::onInit() {
 
   /* subscribers */
   std::string topic_name;
-  for (int i = 0; i < _uav_names_.size(); i++) {
+  for (unsigned int i = 0; i < _uav_names_.size(); i++) {
     topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
     sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
   }
