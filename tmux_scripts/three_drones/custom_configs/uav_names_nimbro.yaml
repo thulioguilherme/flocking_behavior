@@ -21,6 +21,6 @@ network:
 
   robot_names: [
 
-    uav42, uav50, uav51, uav47
+    uav42, uav50, uav51
 
   ]
