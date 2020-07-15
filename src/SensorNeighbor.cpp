@@ -105,7 +105,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
         continue;
       }
 
-      if ((now - itr->second.header.stamp).toSec() < 1.0) {
+      if ((now - itr->second.header.stamp).toSec() < 2.0) {
         double x = itr->second.pose.pose.position.x;
         double y = itr->second.pose.pose.position.y;
 
