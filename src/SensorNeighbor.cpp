@@ -34,7 +34,7 @@ namespace sensor_neighbor {
 
     /* subscribers */
     std::string topic_name;
-    for(int i = 0; i < _uav_names_.size(); i++) {
+    for (int i = 0; i < _uav_names_.size(); i++) {
       topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
       sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
     }
@@ -109,7 +109,8 @@ namespace sensor_neighbor {
           double y = itr->second.pose.pose.position.y;
 
           double range   = sqrt(pow(odom_this.pose.pose.position.x - x, 2) + pow(odom_this.pose.pose.position.y - y, 2));
-          double bearing = math_operations::relativeBearing(odom_this.pose.pose.position.x, odom_this.pose.pose.position.y, heading_this, x, y);
+          double bearing = math_utils::relativeBearing(odom_this.pose.pose.position.x, odom_this.pose.pose.position.y, heading_this, x, y);
+          
           neighbor_info.range.push_back(range);
           neighbor_info.bearing.push_back(bearing);
         }
@@ -117,11 +118,11 @@ namespace sensor_neighbor {
     }
 
     /* only publish if have the information of all the others uavs */
-    if(neighbor_info.range.size() == num_other_uavs_) {
+    if (neighbor_info.range.size() == num_other_uavs_) {
       neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
       neighbor_info.header.stamp    = now;
       neighbor_info.num_neighbors   = neighbor_info.range.size();
-      
+    
       neigbor_pub_.publish(neighbor_info);
     }
   }

@@ -17,8 +17,6 @@ The package contains three nodes:
 ## Usage
 
 1. Start one of the simulations from the simulation directory. The flocking behavior will start automatically after a few seconds if the parameter `auto_start` is `true` (see `config/flocking/default.yaml`). You don't do the following steps if this is the case. Only the optional step, if necessary. 
-
-**Observation:** All the simulations with a leader should start manually. The leader is guide using the node `WaypointFlier` (the default configuration used in all the simulations is in [here](https://pastebin.com/raw/NmHzVvVX).
 ```
 cd simulation/($SELECTED_SIMULATION) && ./start.sh
 ```
@@ -43,4 +41,3 @@ rosservice call /command_sender/send_command "value: 2"
 ## Videos
 
 * Flocking behavior with three drones - [Youtube](https://youtu.be/97olqGrdP04)
-* Flocking behavior with three drones (one leader) - [YouTube](https://youtu.be/vGT5yUIWcMI)
