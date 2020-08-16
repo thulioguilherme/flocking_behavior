@@ -15,7 +15,7 @@ flocking:
     desired_distance: 6.0 # [m]
     range_multiplier: 1.8 
     steepness_potential: 2.0
-    strength_potential: 8.0
+    strength_potential: 6.0
 
   # Motion control parameters
   motion:
