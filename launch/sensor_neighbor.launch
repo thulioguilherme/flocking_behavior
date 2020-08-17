@@ -5,7 +5,10 @@
   <arg name="RUN_TYPE" default="$(env RUN_TYPE)" />
 
   <arg name="simulation" default="true" />
+  <arg name="sensor_type" default="gps" />
+  
   <arg name="config_uav_names" default="" />
+  <arg name="config_sensor_type" default=""/>
 
   <!-- will it run using GNU debugger? -->
   <arg name="DEBUG" default="false" />
@@ -28,9 +31,15 @@
       <!-- ROS parameters config file -->
       <param name="uav_name" value="$(arg UAV_NAME)" />
 
-      <rosparam file="$(find flocking)/config/uav_names.yaml" />
+      <rosparam file="$(find flocking)/config/sensor_type.yaml" />
       
-      <!-- Load a user param file -->
+      <!-- Load custom sensor_type file -->
+      <rosparam if="$(eval not arg('config_sensor_type') == '')" file="$(arg config_sensor_type)" />
+      
+      <!-- Load default uav_names file if using GPS -->
+      <rosparam if="$(eval arg('sensor_type') == 'gps')" file="$(find flocking)/config/uav_names.yaml" />
+
+      <!-- Load custom uav_names file -->
       <rosparam if="$(eval not arg('config_uav_names') == '')" file="$(arg config_uav_names)" />
 
     </node>

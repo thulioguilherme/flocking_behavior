@@ -6,6 +6,7 @@ namespace sensor_neighbor {
   void SensorNeighbor::onInit() {
     /* set flags to false */
     is_initialized_ = false;
+    has_this_pose_ = false;
 
     ros::NodeHandle nh("~");
 
@@ -13,33 +14,61 @@ namespace sensor_neighbor {
 
     mrs_lib::ParamLoader param_loader(nh, "SensorNeighbor");
 
-    /* load UAVs names */
+    /* load parameters */
+    param_loader.loadParam("sensor_type", _sensor_type_);
     param_loader.loadParam("uav_name", _this_uav_name_);
-    param_loader.loadParam("uav_names", _uav_names_);
 
     if (!param_loader.loadedSuccessfully()) {
       ROS_ERROR("[SensorNeighbor]: failed to load non-optional parameters!");
       ros::shutdown();
     }
 
-    auto itr = std::find(_uav_names_.begin(), _uav_names_.end(), _this_uav_name_);
-    if (itr != _uav_names_.cend()) {
-      this_uav_name_idx_ = std::distance(_uav_names_.begin(), itr);
+    /* instantiate subscribers based on used sensor type */
+    if (_sensor_type_ == "gps") {
+      /* load others uav name */
+      param_loader.loadParam("uav_names", _uav_names_);
+
+      if (!param_loader.loadedSuccessfully()) {
+        ROS_ERROR("[SensorNeighbor]: failed to load non-optional parameters!");
+        ros::shutdown();
+      }
+
+      /* check if this UAV name is in the list of all UAVs */
+      auto itr = std::find(_uav_names_.begin(), _uav_names_.end(), _this_uav_name_);
+      if (itr == _uav_names_.cend()) {
+        ROS_ERROR("UAV name %s is not in the list of all UAVs.", _this_uav_name_.c_str());
+        ros::shutdown();
+      }
+
+      /* subscribe to others UAV Odometry */
+      for (unsigned int i = 0; i < _uav_names_.size(); i++) {
+        if (_uav_names_[i] == _this_uav_name_) {
+          continue;
+        }
+    
+        /* generate UAV index using UAV name */
+        unsigned int uav_id = std::stoi(_uav_names_[i].substr(3));
+        sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>("/" + _uav_names_[i] + "/odometry/slow_odom", 1,
+                                 boost::bind(&SensorNeighbor::callbackNeighborsUsingGPS, this, _1, uav_id)));
+      }
+    
+    } else if (_sensor_type_ == "uvdar") {
+      /* subscribe to UVDAR measured poses */
+      sub_uvdar_measured_poses_left_  = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/measuredPosesL", 1,
+                                        boost::bind(&SensorNeighbor::callbackNeighborsUsingUVDAR, this, _1, "left"));
+    
+      sub_uvdar_measured_poses_right_ = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/measuredPosesR", 1,
+                                        boost::bind(&SensorNeighbor::callbackNeighborsUsingUVDAR, this, _1, "right"));
+    
     } else {
-      ROS_ERROR("UAV name %s is not in the list of all UAVs.", _this_uav_name_.c_str());
+      ROS_ERROR("[SensorNeighbor]: The sensor %s is not supported. Shutting down.", _sensor_type_.c_str());
       ros::shutdown();
     }
 
-    num_other_uavs_ = _uav_names_.size() - 1;
+    /* subscribe to this UAV Odometry */
+    sub_this_uav_odom_ = nh.subscribe<nav_msgs::Odometry>("/" + _this_uav_name_ + "/odometry/odom_main", 1, &SensorNeighbor::callbackThisUAVOdom, this);
 
-    /* subscribers */
-    std::string topic_name;
-    for (int i = 0; i < _uav_names_.size(); i++) {
-      topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
-      sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
-    }
-
-    /* decentralization of this node (will be run on every unit independently) */
+    /* publisher */
     neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + _this_uav_name_ + "/sensor_neighbor/neighbors", 1);
 
     /* timers */
@@ -53,78 +82,159 @@ namespace sensor_neighbor {
 
   // | ---------------------- subscriber callbacks ------------------------- |
 
-  /* callbackUAVOdom() //{ */
+  /* callbackThisUAVOdom() //{ */
 
-  void SensorNeighbor::callbackUAVOdom(const nav_msgs::Odometry::ConstPtr& odom, const std::string uav_name) {
+  void SensorNeighbor::callbackThisUAVOdom(const nav_msgs::Odometry::ConstPtr& odom) {
     if (!is_initialized_) {
       return;
     }
-    
+
     {
-      std::scoped_lock lock(mutex_odoms_);
-      if (odoms_.find(uav_name) == odoms_.end()) {
-        odoms_.insert(std::pair<std::string, nav_msgs::Odometry>(uav_name, *odom));
-      } else {
-        odoms_[uav_name] = *odom;
-      }
-    }
-    
-    if (uav_name == _this_uav_name_) {
-      has_odom_this_ = true;
+      std::scoped_lock lock(mutex_this_uav_pose_);
+      
+      /* update position */
+      this_uav_pose_.position.x = odom->pose.pose.position.x;
+      this_uav_pose_.position.y = odom->pose.pose.position.y;
+      this_uav_pose_.heading    = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
+      this_uav_pose_.header     = odom->header;
+      
+      /* turn on flag */
+      has_this_pose_ = true;
     }
   }
 
   //}
 
+  /* callbackNeighborsUsingGPS() //{ */
+
+  void SensorNeighbor::callbackNeighborsUsingGPS(const nav_msgs::Odometry::ConstPtr& odom, const unsigned int uav_id) {
+    if (!is_initialized_) {
+      return;
+    }
+
+    {
+      std::scoped_lock lock(mutex_neighbors_position_);
+
+      /* create new msg */
+      flocking::Position2DStamped uav_pos2d;
+
+      /* fill in msg */
+      uav_pos2d.position.x = odom->pose.pose.position.x;
+      uav_pos2d.position.y = odom->pose.pose.position.y;
+      uav_pos2d.header     = odom->header;
+
+      /* save last estimated position */
+      if (neighbors_position_.find(uav_id) == neighbors_position_.end()) {
+        neighbors_position_.insert(std::pair<unsigned, flocking::Position2DStamped>(uav_id, uav_pos2d));
+      }else {
+        neighbors_position_[uav_id] = uav_pos2d;
+      }
+    }
+  }
+  
+  //}
+
+  /* callbackNeighborsUsingUVDAR //{ */
+
+  void SensorNeighbor::callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_poses, const std::string sensor_position){
+    if (!is_initialized_) {
+      return;
+    }
+
+    {
+      std::scoped_lock lock(mutex_neighbors_position_);
+
+      for (unsigned int i = 0; i < array_poses->poses.size(); i++) {
+        /* create new msg */
+        flocking::Position2DStamped uav_pos2d;
+
+        /* fill in msg */
+        uav_pos2d.header = array_poses->header;
+
+        /* correct estimation using sensor position */
+        if (sensor_position == "left") {
+          uav_pos2d.position.x = cos(1.571) * array_poses->poses[i].pose.position.x - sin(1.571) * array_poses->poses[i].pose.position.y; 
+          uav_pos2d.position.y = sin(1.571) * array_poses->poses[i].pose.position.x + cos(1.571) * array_poses->poses[i].pose.position.y;
+        } else if (sensor_position == "right") {
+          uav_pos2d.position.x = cos(-1.571) * array_poses->poses[i].pose.position.x - sin(-1.571) * array_poses->poses[i].pose.position.y;
+          uav_pos2d.position.y = sin(-1.571) * array_poses->poses[i].pose.position.x + cos(-1.571) * array_poses->poses[i].pose.position.y;
+        }
+
+        /* save last estimated position */
+        unsigned int uav_id = array_poses->poses[i].id;
+        if (neighbors_position_.find(uav_id) == neighbors_position_.end()) {
+          neighbors_position_.insert(std::pair<unsigned int, flocking::Position2DStamped>(uav_id, uav_pos2d));
+        }else {
+          neighbors_position_[uav_id] = uav_pos2d;
+        }
+      }
+    }
+  }
 
   // | --------------------------- timer callbacks ----------------------------- |
 
   /* callbackTimerPubNeighbors() //{ */
 
   void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::TimerEvent& event) {
-
-    if (!is_initialized_ || !has_odom_this_) {
+    if (!is_initialized_ || !has_this_pose_) {
       return;
     }
 
     /* create new neigbors message */
     flocking::Neighbors neighbor_info;
-
-    /* get odometry of this UAV */
     ros::Time now = ros::Time::now();
-    nav_msgs::Odometry odom_this;
-    {
-      std::scoped_lock lock(mutex_odoms_);
-      odom_this           = odoms_[_this_uav_name_];
-      double heading_this = mrs_lib::AttitudeConverter(odom_this.pose.pose.orientation).getHeading();
 
-      /* compute relative info to all neighbors */
-      for (auto itr = odoms_.begin(); itr != odoms_.end(); ++itr) {
-        if (itr->first == _this_uav_name_) {
-          continue;
-        }
+    if (_sensor_type_ == "gps") {
+      /* get pose of this UAV */
+      double focal_x, focal_y, focal_heading;
+      
+      {
+        std::scoped_lock lock(mutex_this_uav_pose_);
+        focal_x       = this_uav_pose_.position.x;
+        focal_y       = this_uav_pose_.position.y;
+        focal_heading = this_uav_pose_.heading;
+      }
 
-        if ((now - itr->second.header.stamp).toSec() < 1.0) {
-          double x = itr->second.pose.pose.position.x;
-          double y = itr->second.pose.pose.position.y;
+      {
+        std::scoped_lock lock(mutex_neighbors_position_);
 
-          double range   = sqrt(pow(odom_this.pose.pose.position.x - x, 2) + pow(odom_this.pose.pose.position.y - y, 2));
-          double bearing = math_utils::relativeBearing(odom_this.pose.pose.position.x, odom_this.pose.pose.position.y, heading_this, x, y);
+        for (auto itr = neighbors_position_.begin(); itr != neighbors_position_.end(); ++itr) {
+          if ((now - itr->second.header.stamp).toSec() < 1.0) {
+            double range   = sqrt(pow(focal_x - itr->second.position.x, 2) + pow(focal_y - itr->second.position.y, 2));
+            double bearing = math_utils::relativeBearing(focal_x, focal_y, focal_heading, itr->second.position.x, itr->second.position.y);
           
-          neighbor_info.range.push_back(range);
-          neighbor_info.bearing.push_back(bearing);
+            neighbor_info.range.push_back(range);
+            neighbor_info.bearing.push_back(bearing);
+          }
+        }
+      }
+    } else if (_sensor_type_ == "uvdar") {
+      double focal_heading;
+
+      {
+        std::scoped_lock lock(mutex_this_uav_pose_);
+        focal_heading = this_uav_pose_.heading;
+      }
+
+      {
+        std::scoped_lock lock(mutex_neighbors_position_);
+        for (auto itr = neighbors_position_.begin(); itr != neighbors_position_.end(); ++itr) {
+          if ((now - itr->second.header.stamp).toSec() < 1.0) {
+            double range = sqrt(pow(itr->second.position.x, 2) + pow(itr->second.position.y, 2));
+            double bearing = math_utils::relativeBearing(0.0, 0.0, focal_heading, itr->second.position.x, itr->second.position.y);
+
+            neighbor_info.range.push_back(range);
+            neighbor_info.bearing.push_back(bearing);
+          }
         }
       }
     }
 
-    /* only publish if have the information of all the others uavs */
-    if (neighbor_info.range.size() == num_other_uavs_) {
-      neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
-      neighbor_info.header.stamp    = now;
-      neighbor_info.num_neighbors   = neighbor_info.range.size();
+    neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
+    neighbor_info.header.stamp    = now;
+    neighbor_info.num_neighbors   = neighbor_info.range.size();
     
-      neigbor_pub_.publish(neighbor_info);
-    }
+    neigbor_pub_.publish(neighbor_info);
   }
 
   //}
