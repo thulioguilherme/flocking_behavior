@@ -35,7 +35,7 @@ void SensorNeighbor::onInit() {
 
   /* subscribers */
   std::string topic_name;
-  for (unsigned int i = 0; i < _uav_names_.size(); i++) {
+  for (int i = 0; i < _uav_names_.size(); i++) {
     topic_name = _uav_names_[i] != _this_uav_name_ ? "/" + _uav_names_[i] + "/odometry/slow_odom" : "/" + _uav_names_[i] + "/odometry/odom_main";
     sub_odom_uavs_.push_back(nh.subscribe<nav_msgs::Odometry>(topic_name, 1, boost::bind(&SensorNeighbor::callbackUAVOdom, this, _1, _uav_names_[i])));
   }
@@ -92,34 +92,35 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
   flocking::Neighbors neighbor_info;
 
   /* get odometry of this UAV */
-  ros::Time          now = ros::Time::now();
   nav_msgs::Odometry odom_this;
   {
     std::scoped_lock lock(mutex_odoms_);
-    odom_this           = odoms_[_this_uav_name_];
-    double heading_this = mrs_lib::AttitudeConverter(odom_this.pose.pose.orientation).getHeading();
+    odom_this = odoms_[_this_uav_name_];
+  }
+  const ros::Time now          = ros::Time::now();
+  const double    heading_this = mrs_lib::AttitudeConverter(odom_this.pose.pose.orientation).getHeading();
 
-    /* compute relative info to all neighbors */
-    for (auto itr = odoms_.begin(); itr != odoms_.end(); ++itr) {
-      if (itr->first == _this_uav_name_) {
-        continue;
-      }
+  /* compute relative info to all neighbors */
+  for (auto itr = odoms_.begin(); itr != odoms_.end(); ++itr) {
+    if (itr->first == _this_uav_name_) {
+      continue;
+    }
 
-      if ((now - itr->second.header.stamp).toSec() < 2.0) {
-        double x = itr->second.pose.pose.position.x;
-        double y = itr->second.pose.pose.position.y;
+    if ((now - itr->second.header.stamp).toSec() < 2.0) {
+      const double x = itr->second.pose.pose.position.x;
+      const double y = itr->second.pose.pose.position.y;
 
-        double range   = sqrt(pow(odom_this.pose.pose.position.x - x, 2) + pow(odom_this.pose.pose.position.y - y, 2));
-        double bearing = math_operations::relativeBearing(odom_this.pose.pose.position.x, odom_this.pose.pose.position.y, heading_this, x, y);
-        neighbor_info.range.push_back(range);
-        neighbor_info.bearing.push_back(bearing);
-      }
+      const double range   = sqrt(pow(odom_this.pose.pose.position.x - x, 2) + pow(odom_this.pose.pose.position.y - y, 2));
+      const double bearing = math_utils::relativeBearing(odom_this.pose.pose.position.x, odom_this.pose.pose.position.y, heading_this, x, y);
+
+      neighbor_info.range.push_back(range);
+      neighbor_info.bearing.push_back(bearing);
     }
   }
 
   /* only publish if have the information of all the others uavs */
   if (neighbor_info.range.size() == num_other_uavs_) {
-    neighbor_info.header.frame_id = _this_uav_name_ + "/local_origin";
+    neighbor_info.header.frame_id = odom_this.header.frame_id;
     neighbor_info.header.stamp    = now;
     neighbor_info.num_neighbors   = neighbor_info.range.size();
 

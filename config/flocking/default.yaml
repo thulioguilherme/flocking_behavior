@@ -11,13 +11,15 @@ flocking:
   duration: 120 # [s]
 
   # Proximal control parameters
-  proximal:
+  proximal: 
     desired_distance: 6.0 # [m]
-    noise: 0.1
-    strength_potential: 850.0
+    range_multiplier: 1.8 
+    steepness_potential: 2.0
+    strength_potential: 6.0
 
   # Motion control parameters
   motion:
-    K1: 0.5 # Linear gain
-    K2: 0.1 # Angular gain
-    move_forward: 0.20  # 
+    K1: 0.5  # Linear gain
+    K2: 0.1  # Angular gain
+    move_forward: 0.2 
+    interpolate_coeff: 0.95 

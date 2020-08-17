@@ -29,22 +29,29 @@ void Formation::onInit() {
   param_loader.loadParam("flocking/duration", _timeout_flocking_);
 
   /* load proximal control parameters */
-  param_loader.loadParam("flocking/proximal/noise", _noise_);
   param_loader.loadParam("flocking/proximal/desired_distance", _desired_distance_);
   param_loader.loadParam("flocking/proximal/strength_potential", _strength_potential_);
-
-  steepness_potential_ = log(2) / log(_desired_distance_ / _noise_);
-  max_range_           = 1.8 * _desired_distance_;
+  param_loader.loadParam("flocking/proximal/steepness_potential", _steepness_potential_);
+  param_loader.loadParam("flocking/proximal/range_multiplier", _range_multipler_);
 
   /* load motion control parameters */
   param_loader.loadParam("flocking/motion/K1", _K1_);
   param_loader.loadParam("flocking/motion/K2", _K2_);
   param_loader.loadParam("flocking/motion/move_forward", _move_forward_);
+  param_loader.loadParam("flocking/motion/interpolate_coeff", _interpolate_coeff_);
 
   if (!param_loader.loadedSuccessfully()) {
     ROS_ERROR("[Formation]: failed to load non-optional parameters!");
     ros::shutdown();
   }
+
+  /* set remaining parameters using loaded ones */
+  noise_           = _desired_distance_ / pow(2, 1 / _steepness_potential_);
+  max_range_       = _range_multipler_  * _desired_distance_;
+  virtual_heading_ = 0.0;
+
+  /* publishers */
+  pub_mode_changed_ = nh.advertise<flocking::ModeStamped>("/" + _uav_name_ + "/flocking/mode_changed", 1);
 
   /* message filters */
   sub_neighbors_info_.subscribe(nh, "/" + _uav_name_ + "/sensor_neighbor/neighbors", 1);
@@ -95,23 +102,26 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
     }
 
     /* convert flocking control (f = p) vector to angular and linear movement */
-    double w = prox_vector_y * _K2_;
     double u = prox_vector_x * _K1_ + _move_forward_;
+    double w = prox_vector_y * _K2_;
+
+    /* calculate virtual heading */
+    double heading   = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
+    virtual_heading_ = mrs_lib::interpolateAngles(virtual_heading_, heading, _interpolate_coeff_);
 
     /* create reference stamped msg */
-    mrs_msgs::ReferenceStampedSrv srv_reference_stamped_msg;
+    mrs_msgs::ReferenceStampedSrv srv_reference_stamped_msg;    
 
     /* fill in header */
     srv_reference_stamped_msg.request.header.stamp    = ros::Time::now();
     srv_reference_stamped_msg.request.header.frame_id = _uav_name_ + "/" + _frame_;
 
     /* fill in reference */
-    double heading = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
-    srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + cos(heading) * u;
-    srv_reference_stamped_msg.request.reference.position.y = odom->pose.pose.position.y + sin(heading) * u;
+    srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + u * cos(heading);
+    srv_reference_stamped_msg.request.reference.position.y = odom->pose.pose.position.y + u * sin(heading);
     srv_reference_stamped_msg.request.reference.position.z = _desired_height_;
-    srv_reference_stamped_msg.request.reference.heading    = heading + w;
-
+    srv_reference_stamped_msg.request.reference.heading    = virtual_heading_ + w;
+    
     /* request service */
     if (srv_client_goto_.call(srv_reference_stamped_msg)) {
     
@@ -139,6 +149,17 @@ void Formation::callbackTimerStateMachine([[maybe_unused]] const ros::TimerEvent
     state_change_time_ = now;
     swarming_mode_     = true;
 
+    /* create mode stamped msg */
+    flocking::ModeStamped ms;
+    
+    /* fill in msg */
+    ms.header.frame_id = _uav_name_;
+    ms.header.stamp    = ros::Time::now();
+    ms.mode            = "Swarming";
+
+    /* publish mode changed */
+    pub_mode_changed_.publish(ms);
+
     /* start flocking countdown */
     timer_flocking_end_.start();
   }
@@ -151,8 +172,19 @@ void Formation::callbackTimerStateMachine([[maybe_unused]] const ros::TimerEvent
 /* callbackTimerAbortFlocking() //{ */
 
 void Formation::callbackTimerAbortFlocking([[maybe_unused]] const ros::TimerEvent& event) {
-  /* turn off swarming mode (switch back to hover mode) */
+  /* turn off swarming mode */
   swarming_mode_ = false;
+
+  /* create mode stamped msg */
+  flocking::ModeStamped ms;
+    
+  /* fill in msg */
+  ms.header.frame_id = _uav_name_;
+  ms.header.stamp    = ros::Time::now();
+  ms.mode            = "No mode";
+
+  /* publish mode changed */
+  pub_mode_changed_.publish(ms);
 
   /* request land service */
   if (_land_end_) {
@@ -206,6 +238,17 @@ bool Formation::callbackStartStateMachine([[maybe_unused]] std_srvs::Trigger::Re
   state_change_time_     = ros::Time::now();
   state_machine_running_ = true;
 
+  /* create mode stamped msg */
+  flocking::ModeStamped ms;
+    
+  /* fill in msg */
+  ms.header.frame_id = _uav_name_;
+  ms.header.stamp    = ros::Time::now();
+  ms.mode            = "Hover";
+
+  /* publish mode changed */
+  pub_mode_changed_.publish(ms);
+
   timer_state_machine_.start();
 
   ROS_INFO("[Formation]: Changed to hover mode. Swarming mode will be activated in %0.2f seconds.", _timeout_state_change_);
@@ -234,6 +277,17 @@ bool Formation::callbackStartHoverMode([[maybe_unused]] std_srvs::Trigger::Reque
 
   /* change code to hover mode */
   hover_mode_ = true;
+
+  /* create mode stamped msg */
+  flocking::ModeStamped ms;
+    
+  /* fill in msg */
+  ms.header.frame_id = _uav_name_;
+  ms.header.stamp    = ros::Time::now();
+  ms.mode            = "Hover";
+
+  /* publish mode changed */
+  pub_mode_changed_.publish(ms);
 
   ROS_INFO("[Formation]: Changed to hover mode. It is safe now to start the swarming mode");
   res.message = "Changed to hover mode. It is safe now to start the swarming mode";
@@ -264,13 +318,23 @@ bool Formation::callbackStartSwarmingMode([[maybe_unused]] std_srvs::Trigger::Re
     return false;
   }
 
- 
   ROS_INFO("[Formation]: Starting the swarming mode");
   res.message = "Starting the swarming mode";
   res.success = true;
   
   /* change code to swarming mode */
   swarming_mode_ = true;
+
+  /* create mode stamped msg */
+  flocking::ModeStamped ms;
+    
+  /* fill in msg */
+  ms.header.frame_id = _uav_name_;
+  ms.header.stamp    = ros::Time::now();
+  ms.mode            = "Swarming";
+
+  /* publish mode changed */
+  pub_mode_changed_.publish(ms);
 
   /* start flocking countdown */
   timer_flocking_end_.start();
@@ -297,8 +361,22 @@ bool Formation::callbackCloseNode([[maybe_unused]] std_srvs::Trigger::Request& r
     return false;
   }
 
-  /* turn off swarming mode (switch back to hover mode) */
+  /* turn off swarming mode */
   swarming_mode_ = false;
+
+  /* change code to swarming mode */
+  swarming_mode_ = true;
+
+  /* create mode stamped msg */
+  flocking::ModeStamped ms;
+    
+  /* fill in msg */
+  ms.header.frame_id = _uav_name_;
+  ms.header.stamp    = ros::Time::now();
+  ms.mode            = "No mode";
+
+  /* publish mode changed */
+  pub_mode_changed_.publish(ms);
 
   /* request land service */
   if (_land_end_) {
@@ -327,8 +405,8 @@ bool Formation::callbackCloseNode([[maybe_unused]] std_srvs::Trigger::Request& r
 /* getProximalMagnitude() //{ */
 
 double Formation::getProximalMagnitude(double range) {
-  return -4 * steepness_potential_ * _strength_potential_ / range *
-         (2 * pow(_noise_ / range, 2 * steepness_potential_) - pow(_noise_ / range, steepness_potential_));
+  return -4 * _steepness_potential_ * _strength_potential_ / range *
+         (2 * pow(noise_ / range, 2 * _steepness_potential_) - pow(noise_ / range, _steepness_potential_));
 }
 
 //}

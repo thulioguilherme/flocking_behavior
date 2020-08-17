@@ -6,21 +6,21 @@
 #include <ros/package.h>
 #include <nodelet/nodelet.h>
 
-#include <mutex>
-
 #include <mrs_lib/param_loader.h>
-
-#include <MathOperations.h>
+#include <mrs_lib/attitude_converter.h>
 
 #include <nav_msgs/Odometry.h>
 
-#include <map>
 #include <std_srvs/Trigger.h>
 
-#include <mrs_lib/attitude_converter.h>
+#include <map>
+#include <mutex>
 
 /* custom msg */
 #include <flocking/Neighbors.h>
+
+/* custom library */
+#include <MathUtils.h>
 
 namespace sensor_neighbor
 {

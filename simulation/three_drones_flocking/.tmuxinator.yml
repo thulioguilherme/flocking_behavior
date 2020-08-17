@@ -14,30 +14,35 @@ windows:
         - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav1
   - status:
       layout: tiled
+      synchronize: after
       panes:
         - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_status status.launch
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_status status.launch
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_status status.launch
   - spawn:
       layout: tiled
+      synchronize: after
       panes:
-        - waitForSimulation; spawn_uav 1 --file uav1_pos.txt --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth
-        - waitForSimulation; spawn_uav 2 --file uav2_pos.txt --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth
-        - waitForSimulation; spawn_uav 3 --file uav3_pos.txt --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth
+        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav1_pos.yaml
+        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav2_pos.yaml
+        - waitForSimulation; spawn_uav 3 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav3_pos.yaml
   - control:
       layout: tiled
+      synchronize: after
       panes:
         - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
   - automatic_start:
       layout: tiled
+      synchronize: after
       panes:
         - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
   - state_machine:
       layout: tiled
+      synchronize: after
       panes:
         - waitForOdometry; history -s 'rosservice call /uav1/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav2/automatic_start/start'
@@ -60,6 +65,7 @@ windows:
         - 'history -s rosservice call /command_sender/send_command \"value: 2\"'
   - takeoff:
       layout: tiled
+      synchronize: after
       panes:
         # #{ uav1
         - 'export UAV_NAME=uav1;
@@ -81,18 +87,21 @@ windows:
         # #}
   - sensor_neighbor:
       layout: tiled
+      synchronize: after
       panes:
         - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch
         - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch
         - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch
   - formation:
       layout: tiled
+      synchronize: after
       panes:
         - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch
         - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch
         - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch
   - neighbors_topic:
       layout: tiled
+      synchronize: after
       panes:
         - waitForRos; rostopic echo /uav1/sensor_neighbor/neighbors
         - waitForRos; rostopic echo /uav2/sensor_neighbor/neighbors
