@@ -34,7 +34,7 @@ input=(
 '
   'Status' 'waitForRos; roslaunch mrs_uav_status status.launch
 '
-  'Control' 'waitForRos; roslaunch mrs_uav_general core.launch config_uav_manager:=./custom_configs/uav_manager.yaml
+  'Control' 'waitForRos; roslaunch mrs_uav_general core.launch config_uav_manager:=./custom_configs/uav_manager.yaml config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
 '
   'AutoStart' 'waitForRos; roslaunch mrs_uav_general automatic_start.launch custom_config:=./custom_configs/automatic_start.yaml
 '

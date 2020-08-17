@@ -1,4 +1,4 @@
 # increase duration
 flocking:
 
-  duration: 420 # [s]
+  duration: 480 # [s]
