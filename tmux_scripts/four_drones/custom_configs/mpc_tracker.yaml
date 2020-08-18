@@ -1,3 +1,4 @@
 # decrease collision avoidance radius
 collision_avoidance:
+  enabled: false
   radius: 1.5 # [m]
