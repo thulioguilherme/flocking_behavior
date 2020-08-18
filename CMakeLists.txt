@@ -17,9 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(DIRECTORY msg FILES
   Neighbors.msg
   ModeStamped.msg
-  Position2D.msg
-  Position2DStamped.msg
-  PoseStamped.msg
 )
 
 generate_messages(

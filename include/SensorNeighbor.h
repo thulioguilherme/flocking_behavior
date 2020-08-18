@@ -1,4 +1,4 @@
-#pragma once
+#pragma once  
 #ifndef SENSOR_NEIGHBOR_H
 #define SENSOR_NEIGHBOR_H
 
@@ -8,6 +8,8 @@
 
 #include <mrs_lib/param_loader.h>
 #include <mrs_lib/attitude_converter.h>
+
+#include <mrs_lib/transformer.h>
 
 #include <mrs_msgs/PoseWithCovarianceArrayStamped.h>
 
@@ -20,11 +22,12 @@
 
 /* custom msgs */
 #include <flocking/Neighbors.h>
-#include <flocking/Position2DStamped.h>
-#include <flocking/PoseStamped.h>
 
 /* custom library */
 #include <MathUtils.h>
+
+using test_t = geometry_msgs::PointStamped;
+template std::optional<test_t> mrs_lib::Transformer::transform<test_t>(const mrs_lib::TransformStamped& to_frame, const test_t& what);
 
 namespace sensor_neighbor
 {
@@ -41,19 +44,22 @@ private:
   std::string              _this_uav_name_;
   std::vector<std::string> _uav_names_;
 
+  mrs_lib::Transformer tfr_;
+  std::optional<mrs_lib::TransformStamped> tf_output_;
+
   // | ------------------------ subscriber callbacks --------------------------- |
 
   void                  callbackThisUAVOdom(const nav_msgs::Odometry::ConstPtr& odom);
   ros::Subscriber       sub_this_uav_odom_;
-  flocking::PoseStamped this_uav_pose_;
+  geometry_msgs::PoseStamped this_uav_pose_;
   std::mutex            mutex_this_uav_pose_;
   bool                  has_this_pose_;
 
-  std::map<unsigned int, flocking::Position2DStamped> neighbors_position_;
+  std::map<unsigned, geometry_msgs::PointStamped> neighbors_position_;
   std::mutex mutex_neighbors_position_;
 
   /* GPS */
-  void callbackNeighborsUsingGPS(const nav_msgs::Odometry::ConstPtr& odom, const unsigned int id);
+  void callbackNeighborsUsingGPS(const nav_msgs::Odometry::ConstPtr& odom, const unsigned id);
   std::vector<ros::Subscriber> sub_odom_uavs_;
 
   /* UVDAR */
