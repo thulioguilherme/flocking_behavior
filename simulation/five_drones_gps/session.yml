@@ -120,8 +120,8 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav5; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav5; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml

@@ -106,16 +106,16 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch custom_sensor_type:=./custom_configs/sensor_type.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch custom_sensor_type:=./custom_configs/sensor_type.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch custom_sensor_type:=./custom_configs/sensor_type.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_sensor_type:=./custom_configs/sensor_type.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_sensor_type:=./custom_configs/sensor_type.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_sensor_type:=./custom_configs/sensor_type.yaml
   - formation:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch custom_configs:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch custom_configs:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch custom_configs:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
   - neighbors_topic:
       layout: tiled
       synchronize: after
