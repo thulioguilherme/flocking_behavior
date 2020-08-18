@@ -53,13 +53,9 @@ namespace sensor_neighbor {
       }
     
     } else if (_sensor_type_ == "uvdar") {
-      /* subscribe to UVDAR measured poses */
-      sub_uvdar_measured_poses_left_  = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/measuredPosesL", 1,
-                                        boost::bind(&SensorNeighbor::callbackNeighborsUsingUVDAR, this, _1, "left"));
-    
-      sub_uvdar_measured_poses_right_ = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/measuredPosesR", 1,
-                                        boost::bind(&SensorNeighbor::callbackNeighborsUsingUVDAR, this, _1, "right"));
-    
+      /* subscribe to UVDAR filtered poses */
+      sub_uvdar_filtered_poses_ = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/filteredPoses", 1, &SensorNeighbor::callbackNeighborsUsingUVDAR, this);
+
     } else {
       ROS_ERROR("[SensorNeighbor]: The sensor %s is not supported. Shutting down.", _sensor_type_.c_str());
       ros::shutdown();
@@ -136,7 +132,7 @@ namespace sensor_neighbor {
 
   /* callbackNeighborsUsingUVDAR //{ */
 
-  void SensorNeighbor::callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_poses, const std::string sensor_position){
+  void SensorNeighbor::callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_poses){
     if (!is_initialized_) {
       return;
     }
@@ -150,15 +146,8 @@ namespace sensor_neighbor {
 
         /* fill in msg */
         uav_pos2d.header = array_poses->header;
-
-        /* correct estimation using sensor position */
-        if (sensor_position == "left") {
-          uav_pos2d.position.x = cos(1.571) * array_poses->poses[i].pose.position.x - sin(1.571) * array_poses->poses[i].pose.position.y; 
-          uav_pos2d.position.y = sin(1.571) * array_poses->poses[i].pose.position.x + cos(1.571) * array_poses->poses[i].pose.position.y;
-        } else if (sensor_position == "right") {
-          uav_pos2d.position.x = cos(-1.571) * array_poses->poses[i].pose.position.x - sin(-1.571) * array_poses->poses[i].pose.position.y;
-          uav_pos2d.position.y = sin(-1.571) * array_poses->poses[i].pose.position.x + cos(-1.571) * array_poses->poses[i].pose.position.y;
-        }
+        uav_pos2d.position.x = array_poses->poses[i].pose.position.x;
+        uav_pos2d.position.y = array_poses->poses[i].pose.position.y;
 
         /* save last estimated position */
         unsigned int uav_id = array_poses->poses[i].id;

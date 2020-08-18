@@ -4,14 +4,13 @@ startup_window: neighbors_topic
 pre_window: export UAV_NAME=uav1; export RUN_TYPE=simulation; export UAV_TYPE=f450; export ODOMETRY_TYPE=gps; export WORLD_NAME=simulation
 windows:
   - roscore:
-      layout: tiled
+      layout: even-vertical
       panes:
         - roscore
   - gazebo:
-      layout: tiled
+      layout: even-vertical
       panes:
         - waitForRos; roslaunch uvdar_core uvdar_gazebo.launch gui:=true
-        - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav1
   - status:
       layout: tiled
       synchronize: after
@@ -23,9 +22,9 @@ windows:
       layout: even-vertical
       synchronize: after
       panes:
-        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --file uav1_pos.yaml --enable-rangefinder --enable-ground-truth --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt" --enable-uv-leds --led-frequencies 6 6 --debug
-        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --file uav2_pos.yaml --enable-rangefinder --enable-ground-truth --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt" --enable-uv-leds --led-frequencies 10 10 --debug
-        - waitForSimulation; spawn_uav 3 --$UAV_TYPE --run --delete --file uav3_pos.yaml --enable-rangefinder --enable-ground-truth --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt" --enable-uv-leds --led-frequencies 15 15 --debug
+        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --file uav1_pos.yaml --enable-rangefinder --enable-ground-truth --enable-uv-leds --led-frequencies 7 7 --debug --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
+        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --file uav2_pos.yaml --enable-rangefinder --enable-ground-truth --enable-uv-leds --led-frequencies 15 15 --debug --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
+        - waitForSimulation; spawn_uav 3 --$UAV_TYPE --run --delete --file uav3_pos.yaml --enable-rangefinder --enable-ground-truth --enable-uv-leds --led-frequencies 30 30 --debug --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
   - control:
       layout: tiled
       synchronize: after
@@ -67,24 +66,25 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        # #{ uav1
         - 'export UAV_NAME=uav1;
           waitForControl;
           rosservice call /$UAV_NAME/mavros/cmd/arming 1;
+          sleep 0.1;
           rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
-        # #}
-        # #{ uav2
         - 'export UAV_NAME=uav2;
           waitForControl;
           rosservice call /$UAV_NAME/mavros/cmd/arming 1;
+          sleep 0.1;
           rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
-        # #}
-        # #{ uav3
         - 'export UAV_NAME=uav3;
           waitForControl;
           rosservice call /$UAV_NAME/mavros/cmd/arming 1;
+          sleep 0.1;
           rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
-        # #}
+  - rviz:
+      layout: even-vertical
+      panes:
+        - export UAV_NAME=uav1; waitForControl; roslaunch uvdar_core multi_frequency_test_rviz.launch
   - uv_observer:
       layout: even-vertical
       panes:
@@ -123,3 +123,15 @@ windows:
         - waitForRos; rostopic echo /uav1/sensor_neighbor/neighbors
         - waitForRos; rostopic echo /uav2/sensor_neighbor/neighbors
         - waitForRos; rostopic echo /uav3/sensor_neighbor/neighbors
+  - uvdar_uav1:
+      layout: tiled
+      panes:
+        - waitForRos; rostopic echo /uav1/uvdar/filteredPoses
+  - uvdar_uav2:
+      layout: tiled
+      panes:
+        - waitForRos; rostopic echo /uav2/uvdar/filteredPoses
+  - uvdar_uav3:
+      layout: tiled
+      panes:
+        - waitForRos; rostopic echo /uav3/uvdar/filteredPoses

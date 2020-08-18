@@ -57,9 +57,8 @@ private:
   std::vector<ros::Subscriber> sub_odom_uavs_;
 
   /* UVDAR */
-  void callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_pose, const std::string sensor_position);
-  ros::Subscriber sub_uvdar_measured_poses_right_;
-  ros::Subscriber sub_uvdar_measured_poses_left_;
+  void callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_pose);
+  ros::Subscriber sub_uvdar_filtered_poses_;
 
   // | --------------------------- timer callbacks ----------------------------- |
   
