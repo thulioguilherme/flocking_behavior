@@ -1,4 +1,4 @@
-#pragma once  
+#pragma once
 #ifndef SENSOR_NEIGHBOR_H
 #define SENSOR_NEIGHBOR_H
 
@@ -44,34 +44,33 @@ private:
   std::string              _this_uav_name_;
   std::vector<std::string> _uav_names_;
 
-  mrs_lib::Transformer tfr_;
+  mrs_lib::Transformer                     tfr_;
   std::optional<mrs_lib::TransformStamped> tf_output_;
 
   // | ------------------------ subscriber callbacks --------------------------- |
 
-  void                  callbackThisUAVOdom(const nav_msgs::Odometry::ConstPtr& odom);
-  ros::Subscriber       sub_this_uav_odom_;
+  void                       callbackThisUAVOdom(const nav_msgs::Odometry::ConstPtr& odom);
+  ros::Subscriber            sub_this_uav_odom_;
   geometry_msgs::PoseStamped this_uav_pose_;
-  std::mutex            mutex_this_uav_pose_;
-  bool                  has_this_pose_;
+  std::mutex                 mutex_this_uav_pose_;
+  bool                       has_this_pose_;
 
-  std::map<unsigned, geometry_msgs::PointStamped> neighbors_position_;
-  std::mutex mutex_neighbors_position_;
+  std::map<unsigned int, geometry_msgs::PointStamped> neighbors_position_;
+  std::mutex                                          mutex_neighbors_position_;
 
   /* GPS */
-  void callbackNeighborsUsingGPS(const nav_msgs::Odometry::ConstPtr& odom, const unsigned id);
+  void                         callbackNeighborsUsingGPS(const nav_msgs::Odometry::ConstPtr& odom, const unsigned int id);
   std::vector<ros::Subscriber> sub_odom_uavs_;
 
   /* UVDAR */
-  void callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_pose);
+  void            callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_pose);
   ros::Subscriber sub_uvdar_filtered_poses_;
 
   // | --------------------------- timer callbacks ----------------------------- |
-  
+
   void           callbackTimerPubNeighbors(const ros::TimerEvent& event);
   ros::Timer     timer_pub_neighbors_;
   ros::Publisher neigbor_pub_;
-
 };
 
 }  // namespace sensor_neighbor

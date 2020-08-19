@@ -1,8 +1,8 @@
 frame: "gps_origin"
 
-land_at_the_end: true
+land_at_the_end: false
 
-desired_height: 1.8 # [m] 
+desired_height: 2.5 # [m] 
 
 flocking:
   # Experiment parameters

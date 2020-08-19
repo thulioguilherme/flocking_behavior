@@ -52,22 +52,6 @@ windows:
         - waitForOdometry; history -s 'rosservice call /uav2/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav3/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav4/automatic_start/start'
-  - command_sender:
-      layout: tiled
-      panes:
-        - waitForSimulation; roslaunch flocking command_sender.launch config_uav_names:=./custom_configs/uav_names.yaml
-  - hover_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 0\"'
-  - swarming_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 1\"'
-  - emergency_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 2\"'
   - takeoff:
       layout: tiled
       synchronize: after
