@@ -60,7 +60,7 @@ namespace sensor_neighbor {
       sub_uvdar_filtered_poses_ = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/filteredPoses", 1, &SensorNeighbor::callbackNeighborsUsingUVDAR, this);
 
       /* subscribe to this UAV Odometry */
-      sub_this_uav_odom_ = nh.subscribe<nav_msgs::Odometry>("/" + _this_uav_name_ + "/odometry/odom_local", 1, &SensorNeighbor::callbackThisUAVOdom, this);
+      sub_this_uav_odom_ = nh.subscribe<nav_msgs::Odometry>("/" + _this_uav_name_ + "/odometry/odom_main", 1, &SensorNeighbor::callbackThisUAVOdom, this);
     } else {
       ROS_ERROR("[SensorNeighbor]: The sensor %s is not supported. Shutting down.", _sensor_type_.c_str());
       ros::shutdown();
@@ -152,8 +152,10 @@ namespace sensor_neighbor {
         uav_point.point.z = array_poses->poses[i].pose.position.z;
         uav_point.header  = array_poses->header;
 
-        auto uav_point_transformed = tfr_.transform(tfr_.getTransform("stable_origin", "fcu").value(), uav_point);
+        auto uav_point_transformed = tfr_.transform(tfr_.getTransform("stable_origin", "gps_origin").value(), uav_point);
 
+        std::cout << "x: " << uav_point_transformed.value().point.x << " / y: " << uav_point_transformed.value().point.y << "\n";
+        
         if (uav_point_transformed.has_value()) {
             /* save estimated position */
             unsigned uav_id = array_poses->poses[i].id;
@@ -207,10 +209,12 @@ namespace sensor_neighbor {
         }
       }
     } else if (_sensor_type_ == "uvdar") {
-      double focal_heading;
+      double focal_x, focal_y, focal_heading;
 
       {
         std::scoped_lock lock(mutex_this_uav_pose_);
+        focal_x       = this_uav_pose_.pose.position.x;
+        focal_y       = this_uav_pose_.pose.position.y;
         focal_heading = mrs_lib::AttitudeConverter(this_uav_pose_.pose.orientation).getHeading();
       }
 
@@ -218,8 +222,8 @@ namespace sensor_neighbor {
         std::scoped_lock lock(mutex_neighbors_position_);
         for (auto itr = neighbors_position_.begin(); itr != neighbors_position_.end(); ++itr) {
           if ((now - itr->second.header.stamp).toSec() < 1.0) {
-            double range = sqrt(pow(itr->second.point.x, 2) + pow(itr->second.point.y, 2));
-            double bearing = math_utils::relativeBearing(0.0, 0.0, focal_heading, itr->second.point.x, itr->second.point.y);
+            double range   = sqrt(pow(focal_x - itr->second.point.x, 2) + pow(focal_y - itr->second.point.y, 2));
+            double bearing = math_utils::relativeBearing(focal_x, focal_y, focal_heading, itr->second.point.x, itr->second.point.y);
 
             neighbor_info.range.push_back(range);
             neighbor_info.bearing.push_back(bearing);
