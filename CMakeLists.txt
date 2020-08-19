@@ -14,11 +14,14 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
 )
 
-add_message_files(DIRECTORY msg FILES Neighbors.msg ModeStamped.msg)
+add_message_files(DIRECTORY msg FILES
+  Neighbors.msg
+  ModeStamped.msg
+)
 
 generate_messages(
-   DEPENDENCIES
-   std_msgs 
+  DEPENDENCIES
+  std_msgs 
 )
 
 catkin_package(

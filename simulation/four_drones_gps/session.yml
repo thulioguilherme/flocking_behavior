@@ -20,7 +20,6 @@ windows:
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_status status.launch
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_status status.launch
         - export UAV_NAME=uav4; waitForSimulation; roslaunch mrs_uav_status status.launch
-        - export UAV_NAME=uav5; waitForSimulation; roslaunch mrs_uav_status status.launch
   - spawn:
       layout: tiled
       synchronize: after
@@ -29,7 +28,6 @@ windows:
         - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav2_pos.yaml
         - waitForSimulation; spawn_uav 3 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav3_pos.yaml
         - waitForSimulation; spawn_uav 4 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav4_pos.yaml
-        - waitForSimulation; spawn_uav 5 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav5_pos.yaml
   - control:
       layout: tiled
       synchronize: after
@@ -38,7 +36,6 @@ windows:
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
         - export UAV_NAME=uav4; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
-        - export UAV_NAME=uav5; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml
   - automatic_start:
       layout: tiled
       synchronize: after
@@ -47,7 +44,6 @@ windows:
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
         - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
         - export UAV_NAME=uav4; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
-        - export UAV_NAME=uav5; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
   - state_machine:
       layout: tiled
       synchronize: after
@@ -56,23 +52,6 @@ windows:
         - waitForOdometry; history -s 'rosservice call /uav2/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav3/automatic_start/start'
         - waitForOdometry; history -s 'rosservice call /uav4/automatic_start/start'
-        - waitForOdometry; history -s 'rosservice call /uav5/automatic_start/start'
-  - command_sender:
-      layout: tiled
-      panes:
-        - waitForSimulation; roslaunch flocking command_sender.launch config_uav_names:=./custom_configs/uav_names.yaml
-  - hover_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 0\"'
-  - swarming_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 1\"'
-  - emergency_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 2\"'
   - takeoff:
       layout: tiled
       synchronize: after
@@ -101,12 +80,6 @@ windows:
           rosservice call /$UAV_NAME/mavros/cmd/arming 1;
           rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
         # #}
-        # #{ uav5
-        - 'export UAV_NAME=uav5;
-          waitForControl;
-          rosservice call /$UAV_NAME/mavros/cmd/arming 1;
-          rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
-        # #}
   - sensor_neighbor:
       layout: tiled
       synchronize: after
@@ -115,13 +88,11 @@ windows:
         - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
         - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
         - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-        - export UAV_NAME=uav5; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
   - formation:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav5; waitForOdometry; roslaunch flocking formation.launch custom_config:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
