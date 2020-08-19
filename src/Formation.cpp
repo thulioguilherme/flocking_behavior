@@ -90,46 +90,46 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
   if (!is_initialized_ || !swarming_mode_)
     return;
 
+  /* calculate proximal control vector */
+  double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_magnitude;
   if (neighbors->num_neighbors > 0) {
-    double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_magnitude;
     for (unsigned int i = 0; i < neighbors->num_neighbors; i++) {
       if (neighbors->range[i] <= max_range_) {
-        /* compute proximal control vector */
         prox_magnitude = Formation::getProximalMagnitude(neighbors->range[i]);
         prox_vector_x += prox_magnitude * cos(neighbors->bearing[i]);
         prox_vector_y += prox_magnitude * sin(neighbors->bearing[i]);
       }
     }
-
-    /* convert flocking control (f = p) vector to angular and linear movement */
-    double u = prox_vector_x * _K1_ + _move_forward_;
-    double w = prox_vector_y * _K2_;
-
-    /* calculate virtual heading */
-    double heading   = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
-    virtual_heading_ = mrs_lib::interpolateAngles(virtual_heading_, heading, _interpolate_coeff_);
-
-    /* create reference stamped msg */
-    mrs_msgs::ReferenceStampedSrv srv_reference_stamped_msg;    
-
-    /* fill in header */
-    srv_reference_stamped_msg.request.header.stamp    = ros::Time::now();
-    srv_reference_stamped_msg.request.header.frame_id = _uav_name_ + "/" + _frame_;
-
-    /* fill in reference */
-    srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + u * cos(heading);
-    srv_reference_stamped_msg.request.reference.position.y = odom->pose.pose.position.y + u * sin(heading);
-    srv_reference_stamped_msg.request.reference.position.z = _desired_height_;
-    srv_reference_stamped_msg.request.reference.heading    = virtual_heading_ + w;
-    
-    /* request service */
-    if (srv_client_goto_.call(srv_reference_stamped_msg)) {
-    
-    } else {
-      ROS_ERROR("Failed to call service.\n");
-    }
-
   }
+
+  /* convert flocking control (f = p) vector to angular and linear movement */
+  double u = prox_vector_x * _K1_ + _move_forward_;
+  double w = prox_vector_y * _K2_;
+
+  /* calculate virtual heading */
+  double heading   = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
+  virtual_heading_ = mrs_lib::interpolateAngles(virtual_heading_, heading, _interpolate_coeff_);
+
+  /* create reference stamped msg */
+  mrs_msgs::ReferenceStampedSrv srv_reference_stamped_msg;    
+
+  /* fill in header */
+  srv_reference_stamped_msg.request.header.stamp    = ros::Time::now();
+  srv_reference_stamped_msg.request.header.frame_id = _uav_name_ + "/" + _frame_;
+
+  /* fill in reference */
+  srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + u * cos(heading);
+  srv_reference_stamped_msg.request.reference.position.y = odom->pose.pose.position.y + u * sin(heading);
+  srv_reference_stamped_msg.request.reference.position.z = _desired_height_;
+  srv_reference_stamped_msg.request.reference.heading    = virtual_heading_ + w;
+    
+  /* request service */
+  if (srv_client_goto_.call(srv_reference_stamped_msg)) {
+    
+  } else {
+     ROS_ERROR("Failed to call service.\n");
+  }
+
 }
 
 //}

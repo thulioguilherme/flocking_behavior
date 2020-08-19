@@ -55,20 +55,17 @@ void SensorNeighbor::onInit() {
                                                                 boost::bind(&SensorNeighbor::callbackNeighborsUsingGPS, this, _1, uav_id)));
     }
 
-    /* subscribe to this UAV Odometry */
-    sub_this_uav_odom_ = nh.subscribe<nav_msgs::Odometry>("/" + _this_uav_name_ + "/odometry/odom_main", 1, &SensorNeighbor::callbackThisUAVOdom, this);
-
   } else if (_sensor_type_ == "uvdar") {
     /* subscribe to UVDAR filtered poses */
     sub_uvdar_filtered_poses_ = nh.subscribe<mrs_msgs::PoseWithCovarianceArrayStamped>("/" + _this_uav_name_ + "/uvdar/filteredPoses", 1,
                                                                                        &SensorNeighbor::callbackNeighborsUsingUVDAR, this);
-
-    /* subscribe to this UAV Odometry */
-    sub_this_uav_odom_ = nh.subscribe<nav_msgs::Odometry>("/" + _this_uav_name_ + "/odometry/odom_main", 1, &SensorNeighbor::callbackThisUAVOdom, this);
   } else {
     ROS_ERROR("[SensorNeighbor]: The sensor %s is not supported. Shutting down.", _sensor_type_.c_str());
     ros::shutdown();
   }
+
+  /* subscribe to this UAV Odometry */
+  sub_this_uav_odom_ = nh.subscribe<nav_msgs::Odometry>("/" + _this_uav_name_ + "/odometry/odom_main", 1, &SensorNeighbor::callbackThisUAVOdom, this);
 
   /* publisher */
   neigbor_pub_ = nh.advertise<flocking::Neighbors>("/" + _this_uav_name_ + "/sensor_neighbor/neighbors", 1);
@@ -76,6 +73,7 @@ void SensorNeighbor::onInit() {
   /* timers */
   timer_pub_neighbors_ = nh.createTimer(ros::Rate(5.0), &SensorNeighbor::callbackTimerPubNeighbors, this);
 
+  /* transformer */
   tfr_ = mrs_lib::Transformer("SensorNeighbor", _this_uav_name_);
 
   ROS_INFO_ONCE("[SensorNeighbor]: initialized");
@@ -151,7 +149,7 @@ void SensorNeighbor::callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovaria
     std::scoped_lock lock(mutex_this_uav_pose_);
     odom_frame_id = this_uav_pose_.header.frame_id;
   }
-
+  
   auto tf = tfr_.getTransform(array_poses->header.frame_id, odom_frame_id);
   if (!tf.has_value()) {
     ROS_WARN("Could not transform pose from %s to %s", array_poses->header.frame_id.c_str(), odom_frame_id.c_str());
@@ -170,13 +168,9 @@ void SensorNeighbor::callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovaria
       uav_point.point.z = array_poses->poses[i].pose.position.z;
       uav_point.header  = array_poses->header;
 
-
       auto uav_point_transformed = tfr_.transform(tf.value(), uav_point);
 
       if (uav_point_transformed.has_value()) {
-
-        /* std::cout << "x: " << uav_point_transformed.value().point.x << " / y: " << uav_point_transformed.value().point.y << "\n"; */
-
         /* save estimated position */
         const unsigned int uav_id = array_poses->poses[i].id;
 

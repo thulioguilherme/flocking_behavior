@@ -1,9 +1,9 @@
 flocking:
-  duration: 240
+  duration: 180
 
   proximal:
-    strength_potential: 2.0 # from 6.0 to 2.0
-    desired_distance: 3.0 # from 6.0 to 3.0
+    strength_potential: 2.0 # from 6 to 2
+    desired_distance: 6.0 
   
   motion:
     interpolate_coeff: 0.0 # turn off interpolation function
