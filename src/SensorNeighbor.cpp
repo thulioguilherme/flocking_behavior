@@ -4,7 +4,7 @@
 namespace sensor_neighbor
 {
 
-/*//{ onInit() */
+/* onInit() //{ */
 
 void SensorNeighbor::onInit() {
   /* set flags to false */
@@ -82,7 +82,7 @@ void SensorNeighbor::onInit() {
   ros::spin();
 }
 
-/*//}*/
+//}
 
 // | ---------------------- subscriber callbacks ------------------------- |
 

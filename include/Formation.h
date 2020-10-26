@@ -11,6 +11,8 @@
 #include <mrs_lib/geometry_utils.h>
 
 #include <mrs_msgs/ReferenceStampedSrv.h>
+#include <mrs_msgs/Float64Stamped.h>
+
 #include <nav_msgs/Odometry.h>
 
 #include <std_srvs/Trigger.h>
@@ -46,6 +48,7 @@ private:
 
   /* publishers */
   ros::Publisher pub_mode_changed_;
+  ros::Publisher pub_virtual_heading_;
 
   // | ---------------------- proximal control parameters ---------------------- |
 
@@ -53,6 +56,7 @@ private:
   double _range_multipler_;
   double _steepness_potential_;
   double _strength_potential_;
+  
   double max_range_;
   double noise_;
   
@@ -62,7 +66,11 @@ private:
   double _K2_;  // Angular gain
   double _move_forward_;
   double _interpolate_coeff_;
+  bool  _fixed_heading_;
+
   double virtual_heading_;
+  double smooth_heading_;
+  double initial_heading_;
 
   // | ----------------------- message filters callbacks ----------------------- |
   

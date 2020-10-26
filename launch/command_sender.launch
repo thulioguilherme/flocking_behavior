@@ -1,10 +1,6 @@
 <launch>
 
   <!-- defines name of the namespace of the drone -->
-  <arg name="UAV_NAME" default="$(env UAV_NAME)" />
-  <arg name="RUN_TYPE" default="$(env RUN_TYPE)" />
-
-  <arg name="simulation" default="true" />
   <arg name="config_uav_names" default="" />
 
   <!-- will it run using GNU debugger? -->
@@ -23,7 +19,6 @@
 
   <node pkg="nodelet" type="nodelet" name="command_sender" args="$(arg nodelet) command_sender/CommandSender $(arg nodelet_manager)" launch-prefix="$(arg launch_prefix_debug)" output="screen">
     <!-- ROS parameters config file -->
-    <param name="uav_name" value="$(arg UAV_NAME)" />
 
     <rosparam file="$(find flocking)/config/uav_names.yaml" />
     <rosparam file="$(find flocking)/config/commands.yaml" />

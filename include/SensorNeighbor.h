@@ -8,14 +8,11 @@
 
 #include <mrs_lib/param_loader.h>
 #include <mrs_lib/attitude_converter.h>
-
 #include <mrs_lib/transformer.h>
 
 #include <mrs_msgs/PoseWithCovarianceArrayStamped.h>
 
 #include <nav_msgs/Odometry.h>
-
-#include <std_srvs/Trigger.h>
 
 #include <map>
 #include <mutex>

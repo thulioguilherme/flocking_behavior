@@ -37,7 +37,3 @@ rosservice call /command_sender/send_command "value: 1"
 ```
 rosservice call /command_sender/send_command "value: 2"
 ```
-
-## Videos
-
-* Flocking behavior with three drones - [Youtube](https://youtu.be/97olqGrdP04)
