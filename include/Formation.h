@@ -42,6 +42,7 @@ private:
   bool is_initialized_;
   bool hover_mode_;
   bool swarming_mode_;
+  bool _use_3D_;
 
   /* ros parameters */
   std::string _uav_name_;
@@ -64,6 +65,7 @@ private:
 
   double _K1_;  // Linear gain
   double _K2_;  // Angular gain
+  double _K3_;
   double _move_forward_;
   double _interpolate_coeff_;
   bool  _fixed_heading_;
@@ -84,6 +86,7 @@ private:
   void        callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom);
   std::string _frame_;
   double      _desired_height_;
+  double      _minimum_height_;
   
   // | --------------------------- timer callbacks ----------------------------- |
 

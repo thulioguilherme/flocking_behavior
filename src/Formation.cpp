@@ -24,6 +24,8 @@ void Formation::onInit() {
   param_loader.loadParam("frame", _frame_);
   param_loader.loadParam("desired_height", _desired_height_);
   param_loader.loadParam("land_at_the_end", _land_end_);
+  param_loader.loadParam("use_3D", _use_3D_);
+  param_loader.loadParam("minimum_height", _minimum_height_);
 
   param_loader.loadParam("flocking/auto_start", _auto_start_);
   param_loader.loadParam("flocking/swarming_after_hover", _timeout_state_change_);
@@ -38,6 +40,7 @@ void Formation::onInit() {
   /* load motion control parameters */
   param_loader.loadParam("flocking/motion/K1", _K1_);
   param_loader.loadParam("flocking/motion/K2", _K2_);
+  param_loader.loadParam("flocking/motion/K3", _K3_);
   param_loader.loadParam("flocking/motion/move_forward", _move_forward_);
   param_loader.loadParam("flocking/motion/interpolate_coeff", _interpolate_coeff_);
   param_loader.loadParam("flocking/motion/fixed_heading", _fixed_heading_);
@@ -106,13 +109,20 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
     return;
 
   /* calculate proximal control vector */
-  double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_magnitude;
+  double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_vector_z = 0.0, prox_magnitude;
   if (neighbors->num_neighbors > 0) {
     for (unsigned int i = 0; i < neighbors->num_neighbors; i++) {
       if (neighbors->range[i] <= max_range_) {
         prox_magnitude = Formation::getProximalMagnitude(neighbors->range[i]);
-        prox_vector_x += prox_magnitude * cos(neighbors->bearing[i]);
-        prox_vector_y += prox_magnitude * sin(neighbors->bearing[i]);
+        
+        if (_use_3D_) {
+          prox_vector_x += prox_magnitude * sin(neighbors->inclination[i]) * cos(neighbors->bearing[i]);
+          prox_vector_y += prox_magnitude * sin(neighbors->inclination[i]) * sin(neighbors->bearing[i]);
+          prox_vector_z += prox_magnitude * cos(neighbors->inclination[i]);
+        } else {
+          prox_vector_x += prox_magnitude * cos(neighbors->bearing[i]);
+          prox_vector_y += prox_magnitude * sin(neighbors->bearing[i]);
+        }
       }
     }
   }
@@ -162,14 +172,19 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
     srv_reference_stamped_msg.request.reference.heading    = smooth_heading_ + w;
   }
   
-  /* set desired height */
-  srv_reference_stamped_msg.request.reference.position.z = _desired_height_;
+  /* set height */
+  if (_use_3D_) {
+    double v = prox_vector_z * _K3_;
+    srv_reference_stamped_msg.request.reference.position.z = math_utils::getMaxValue(odom->pose.pose.position.z + v, _minimum_height_);
+  } else {
+    srv_reference_stamped_msg.request.reference.position.z = _desired_height_; 
+  }
 
   /* request service */
   if (srv_client_goto_.call(srv_reference_stamped_msg)) {
     
   } else {
-     ROS_ERROR("Failed to call service.\n");
+    ROS_ERROR("Failed to call service.\n");
   }
 
 }

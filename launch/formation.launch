@@ -4,7 +4,8 @@
   <arg name="UAV_NAME" default="$(env UAV_NAME)" />
   <arg name="RUN_TYPE" default="$(env RUN_TYPE)" />
 
-  <arg name="simulation" default="true" />
+  <arg name="use_3D" default="false" />
+
   <arg name="config_flocking" default="" />
 
   <!-- will it run using GNU debugger? -->
@@ -29,6 +30,7 @@
       <!-- Parameters loaded from launch file -->
       <param name="simulation" value="$(eval arg('RUN_TYPE') == 'simulation')" />
       <param name="uav_name" value="$(arg UAV_NAME)" />
+      <param name="use_3D" value="$(arg use_3D)" />
 
       <!-- ROS parameters config file -->
       <rosparam file="$(find flocking)/config/flocking/default.yaml" />

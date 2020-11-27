@@ -4,6 +4,8 @@ land_at_the_end: false
 
 desired_height: 2.5 # [m] 
 
+minimum_height: 2.0 # [m]
+
 flocking:
   # Experiment parameters
   auto_start: true
@@ -21,6 +23,7 @@ flocking:
   motion:
     K1: 0.5  # Linear gain
     K2: 0.2  # Angular gain
+    K3: 0.1
     move_forward: 0.3 
     interpolate_coeff: 0.95
     fixed_heading: false 

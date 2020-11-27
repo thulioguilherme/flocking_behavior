@@ -2,6 +2,14 @@
 
 namespace math_utils {
 
+  /* getMaxValue() //{ */
+
+  double getMaxValue(const double a, const double b) {
+    return (a > b) ? a : b;
+  }
+
+  //}
+
   /* heading2Rad() //{ */
 
   double heading2Rad(const double a) {
@@ -22,8 +30,6 @@ namespace math_utils {
       return 180 * a / M_PI;
     }
   }
-
-  //}
   
   //}
 
@@ -59,6 +65,22 @@ namespace math_utils {
     return headingDiff(focalRbt_heading, angle_between);
   }
 
+  //}
+
+  /* inclination() //{ */
+
+  double inclination(const double focalRbt_x, const double focalRbt_y, const double focalRbt_z, const double neighborRbt_x, const double neighborRbt_y, const double neighborRbt_z) {
+    double x = neighborRbt_x - focalRbt_x;
+    double y = neighborRbt_y - focalRbt_y;
+    double z = neighborRbt_z - focalRbt_z;
+
+    if (z == 0) {
+      return 0;
+    } else {
+      return atan2(sqrt(pow(x, 2) + pow(y, 2)), z); 
+    }
+  }
+  
   //}
   
 } // namespace math_utils

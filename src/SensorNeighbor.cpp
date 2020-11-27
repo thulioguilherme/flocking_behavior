@@ -19,6 +19,8 @@ void SensorNeighbor::onInit() {
 
   /* load parameters */
   param_loader.loadParam("sensor_type", _sensor_type_);
+  param_loader.loadParam("use_3D", _use_3D_);
+  
   param_loader.loadParam("uav_name", _this_uav_name_);
 
   if (!param_loader.loadedSuccessfully()) {
@@ -200,11 +202,12 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
   const ros::Time     now = ros::Time::now();
 
   /* get pose of this UAV */
-  double focal_x, focal_y, focal_heading;
+  double focal_x, focal_y, focal_z, focal_heading;
   {
     std::scoped_lock lock(mutex_this_uav_pose_);
     focal_x       = this_uav_pose_.pose.position.x;
     focal_y       = this_uav_pose_.pose.position.y;
+    focal_z       = this_uav_pose_.pose.position.z;
     focal_heading = mrs_lib::AttitudeConverter(this_uav_pose_.pose.orientation).getHeading();
   }
 
@@ -213,11 +216,20 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
 
     for (auto itr = neighbors_position_.begin(); itr != neighbors_position_.end(); ++itr) {
       if ((now - itr->second.header.stamp).toSec() < 2.0) {
-        const double range   = sqrt(pow(focal_x - itr->second.point.x, 2) + pow(focal_y - itr->second.point.y, 2));
         const double bearing = math_utils::relativeBearing(focal_x, focal_y, focal_heading, itr->second.point.x, itr->second.point.y);
+        double range, inclination;
+
+        if (_use_3D_) {
+          range       = sqrt(pow(focal_x - itr->second.point.x, 2) + pow(focal_y - itr->second.point.y, 2) + pow(focal_z - itr->second.point.z, 2));
+          inclination = math_utils::inclination(focal_x, focal_y, focal_z, itr->second.point.x, itr->second.point.y, itr->second.point.z);
+        } else {
+          range       = sqrt(pow(focal_x - itr->second.point.x, 2) + pow(focal_y - itr->second.point.y, 2));
+          inclination = 1.57;
+        }
 
         neighbor_info.range.push_back(range);
         neighbor_info.bearing.push_back(bearing);
+        neighbor_info.inclination.push_back(inclination);
       }
     }
   }

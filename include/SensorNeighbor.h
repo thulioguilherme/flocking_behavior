@@ -36,6 +36,7 @@ public:
 private:
   /* flags */
   bool is_initialized_;
+  bool _use_3D_;
 
   std::string              _sensor_type_;
   std::string              _this_uav_name_;
