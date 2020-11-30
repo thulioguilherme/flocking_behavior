@@ -92,15 +92,15 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch use_3D:=true
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch use_3D:=true
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch use_3D:=true
-        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch use_3D:=true
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch use_3D:=true config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch use_3D:=true config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking formation.launch use_3D:=true config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking formation.launch use_3D:=true config_flocking:=./custom_configs/flocking/modified.yaml
 #  - rosbag:
 #      layout: tiled
 #      synchronize: after
 #      panes:
-#        - export UAV_NAME=uav1; waitForRos; rosbag record -O sim_uav1.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed
-#        - export UAV_NAME=uav2; waitForRos; rosbag record -O sim_uav2.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed
-#        - export UAV_NAME=uav3; waitForRos; rosbag record -O sim_uav3.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed
-#        - export UAV_NAME=uav4; waitForRos; rosbag record -O sim_uav4.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed
+#        - export UAV_NAME=uav1; waitForRos; rosbag record -O sim_uav1.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed /$UAV_NAME/flocking/virtual_heading
+#        - export UAV_NAME=uav2; waitForRos; rosbag record -O sim_uav2.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed /$UAV_NAME/flocking/virtual_heading
+#        - export UAV_NAME=uav3; waitForRos; rosbag record -O sim_uav3.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed /$UAV_NAME/flocking/virtual_heading 
+#        - export UAV_NAME=uav4; waitForRos; rosbag record -O sim_uav4.bag /$UAV_NAME/odometry/odom_main /$UAV_NAME/sensor_neighbor/neighbors /$UAV_NAME/flocking/mode_changed /$UAV_NAME/flocking/virtual_heading
