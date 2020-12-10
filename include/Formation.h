@@ -8,7 +8,7 @@
 
 #include <mrs_lib/param_loader.h>
 #include <mrs_lib/attitude_converter.h>
-#include <mrs_lib/geometry_utils.h>
+#include <mrs_lib/geometry/cyclic.h>
 
 #include <mrs_msgs/ReferenceStampedSrv.h>
 #include <mrs_msgs/Float64Stamped.h>

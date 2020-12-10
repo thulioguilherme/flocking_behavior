@@ -142,7 +142,7 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
   double heading = mrs_lib::AttitudeConverter(odom->pose.pose.orientation).getHeading();
 
   if (_fixed_heading_) {
-    virtual_heading_ = mrs_lib::interpolateAngles(virtual_heading_, heading, _interpolate_coeff_);
+    virtual_heading_ = mrs_lib::geometry::radians::interp(virtual_heading_, heading, _interpolate_coeff_);
 
     /* fill in reference */
     srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + u * cos(virtual_heading_);
@@ -164,7 +164,7 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
     pub_virtual_heading_.publish(msg_float_stamped);
 
   } else {
-    smooth_heading_ = mrs_lib::interpolateAngles(smooth_heading_, heading, _interpolate_coeff_);
+    smooth_heading_ = mrs_lib::geometry::radians::interp(smooth_heading_, heading, _interpolate_coeff_);
 
     /* fill in reference */
     srv_reference_stamped_msg.request.reference.position.x = odom->pose.pose.position.x + u * cos(heading);
