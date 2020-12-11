@@ -11,6 +11,7 @@ windows:
       layout: even-vertical
       panes:
         - waitForRos; roslaunch uvdar_core uvdar_gazebo.launch gui:=true
+        #- waitForRos; roslaunch uvdar_core uvdar_gazebo.launch world_name:=dunes_plane gui:=true
   - status:
       layout: tiled
       synchronize: after

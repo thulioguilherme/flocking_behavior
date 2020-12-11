@@ -11,6 +11,7 @@ windows:
       layout: tiled
       panes:
         - waitForRos; roslaunch mrs_simulation simulation.launch world_name:=grass_plane gui:=true
+        #- waitForRos; roslaunch mrs_simulation simulation.launch world_name:=dunes_plane gui:=true        
   - status:
       layout: tiled
       synchronize: after
