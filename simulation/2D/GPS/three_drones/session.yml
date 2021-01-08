@@ -23,9 +23,7 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav1_pos.yaml
-        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav2_pos.yaml
-        - waitForSimulation; spawn_uav 3 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file uav3_pos.yaml
+        - waitForSimulation; rosservice call /mrs_drone_spawner/spawn "1 2 3 $UAV_TYPE --enable-rangefinder --pos_file `pwd`/pos.yaml"
   - control:
       layout: tiled
       synchronize: after

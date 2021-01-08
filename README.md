@@ -20,7 +20,7 @@ The package contains two central nodes:
 ## Getting started
 
 ### Prerequisites
-* [ROS Melodic](http://wiki.ros.org/melodic)
+* [ROS Noetic](http://wiki.ros.org/noetic)
 * [Multi-robot Systems Group UAV system](https://github.com/ctu-mrs/mrs_uav_system)
 * [UVDAR drivers and processing](https://github.com/ctu-mrs/uvdar_core)
 * [UVDAR Gazebo plugin](https://github.com/ctu-mrs/uvdar_gazebo_plugin)

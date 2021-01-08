@@ -8,7 +8,7 @@ minimum_height: 2.0 # [m]
 
 flocking:
   # Experiment parameters
-  auto_start: true
+  auto_start: false
   swarming_after_hover: 10 # [s]
   duration: 120 # [s]
 

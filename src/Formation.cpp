@@ -269,7 +269,7 @@ void Formation::callbackTimerAbortFlocking([[maybe_unused]] const ros::TimerEven
 
 bool Formation::callbackStartStateMachine([[maybe_unused]] std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res) {
   if(!_auto_start_){
-    ROS_WARN("[Formation]: The automatic start is not on. The hover and swarming mode should start manually.");
+    ROS_WARN_ONCE("[Formation]: The automatic start is not on. The hover and swarming mode should start manually.");
     res.message = "[Formation]: The automatic start is not on. The hover and swarming mode should start manually.";
     res.success = false;
     return false;
