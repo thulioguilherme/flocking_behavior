@@ -1,9 +1,0 @@
-flocking:
-  duration: 120
-
-  proximal:
-    desired_distance: 5.0 
-  
-  motion:
-    K2: 0.1
-    fixed_heading: true

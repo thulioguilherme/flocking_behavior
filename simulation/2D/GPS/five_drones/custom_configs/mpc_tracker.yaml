@@ -1,3 +1,0 @@
-# disable collision avoidance
-collision_avoidance:
-  enabled: false
