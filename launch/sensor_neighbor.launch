@@ -32,7 +32,7 @@
       <param name="uav_name" value="$(arg UAV_NAME)" />
       <param name="use_3D" value="$(arg use_3D)" />
 
-      <rosparam file="$(find flocking)/config/sensor.yaml" />
+      <rosparam file="$(find flocking)/config/sensor_neighbors.yaml" />
       
       <!-- Load custom sensor_type file -->
       <rosparam if="$(eval not arg('config_sensor') == '')" file="$(arg config_sensor)" />

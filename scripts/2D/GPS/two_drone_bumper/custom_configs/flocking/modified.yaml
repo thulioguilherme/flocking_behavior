@@ -1,0 +1,7 @@
+desired_height: 1.6 # [m] 
+
+flocking:
+  # Proximal control parameters
+  proximal: 
+    desired_distance: 5.0 # [m]
+    strength_potential: 2.0

@@ -11,6 +11,8 @@
 #include <mrs_lib/geometry/cyclic.h>
 
 #include <mrs_msgs/ReferenceStampedSrv.h>
+
+#include <mrs_msgs/ObstacleSectors.h>
 #include <mrs_msgs/Float64Stamped.h>
 
 #include <nav_msgs/Odometry.h>
@@ -27,6 +29,8 @@
 
 /* custom library */
 #include <MathUtils.h>
+
+#include <limits>
 
 using namespace message_filters;
 
@@ -74,16 +78,25 @@ private:
   double smooth_heading_;
   double initial_heading_;
 
+  // | -------------------------- subscriber callbacks ------------------------- |
+
+  double _move_up_;
+  double _L1_;
+  double _min_obstacle_distance_;
+  double last_obstacle_uav_z_;
+  double last_obstacle_distance_;
+
   // | ----------------------- message filters callbacks ----------------------- |
-  
-  typedef sync_policies::ApproximateTime<flocking::Neighbors, nav_msgs::Odometry> FormationPolicy;
+
+  typedef sync_policies::ApproximateTime<flocking::Neighbors, nav_msgs::Odometry, mrs_msgs::ObstacleSectors> FormationPolicy;
   typedef Synchronizer<FormationPolicy> Sync;
   boost::shared_ptr<Sync> sync_;
   
-  message_filters::Subscriber<flocking::Neighbors> sub_neighbors_info_;
-  message_filters::Subscriber<nav_msgs::Odometry>  sub_odom_;
+  message_filters::Subscriber<nav_msgs::Odometry>        sub_odom_;
+  message_filters::Subscriber<flocking::Neighbors>       sub_neighbors_info_;
+  message_filters::Subscriber<mrs_msgs::ObstacleSectors> sub_obstacle_sectors_;
 
-  void        callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom);
+  void        callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom, const mrs_msgs::ObstacleSectors::ConstPtr& obstacle_sectors);
   std::string _frame_;
   double      _desired_height_;
   double      _minimum_height_;
@@ -129,6 +142,9 @@ private:
   // | -------------------------- support functions ---------------------------- |
 
   double getProximalMagnitude(double range);
+
+  double getObstacleMagnitude(double range);
+
 };
 
 }  // namespace formation

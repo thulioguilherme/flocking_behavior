@@ -31,6 +31,11 @@ void Formation::onInit() {
   param_loader.loadParam("flocking/swarming_after_hover", _timeout_state_change_);
   param_loader.loadParam("flocking/duration", _timeout_flocking_);
 
+  /* load obstacle avoidance parameters */
+  param_loader.loadParam("obstacle_avoidance/L1", _L1_);
+  param_loader.loadParam("obstacle_avoidance/min_obstacle_distance", _min_obstacle_distance_);
+  param_loader.loadParam("obstacle_avoidance/move_up", _move_up_);
+
   /* load proximal control parameters */
   param_loader.loadParam("flocking/proximal/desired_distance", _desired_distance_);
   param_loader.loadParam("flocking/proximal/strength_potential", _strength_potential_);
@@ -72,10 +77,12 @@ void Formation::onInit() {
   pub_mode_changed_ = nh.advertise<flocking::ModeStamped>("/" + _uav_name_ + "/flocking/mode_changed", 1);
 
   /* message filters */
-  sub_neighbors_info_.subscribe(nh, "/" + _uav_name_ + "/sensor_neighbor/neighbors", 1);
   sub_odom_.subscribe(nh, "/" + _uav_name_ + "/odometry/odom_main", 1);
-  sync_.reset(new Sync(FormationPolicy(10), sub_neighbors_info_, sub_odom_));
-  sync_->registerCallback(boost::bind(&Formation::callbackUAVNeighbors, this, _1, _2));
+  sub_neighbors_info_.subscribe(nh, "/" + _uav_name_ + "/sensor_neighbor/neighbors", 1);
+  sub_obstacle_sectors_.subscribe(nh, "/" + _uav_name_ + "/bumper/obstacle_sectors", 1);
+
+  sync_.reset(new Sync(FormationPolicy(10), sub_neighbors_info_, sub_odom_, sub_obstacle_sectors_));
+  sync_->registerCallback(boost::bind(&Formation::callbackUAVNeighbors, this, _1, _2, _3));
 
   /* service client */
   srv_client_goto_ = nh.serviceClient<mrs_msgs::ReferenceStampedSrv>("/" + _uav_name_ + "/control_manager/reference");
@@ -91,6 +98,9 @@ void Formation::onInit() {
   timer_state_machine_ = nh.createTimer(ros::Duration(_timeout_state_change_), &Formation::callbackTimerStateMachine, this, true, false);
   timer_flocking_end_  = nh.createTimer(ros::Duration(_timeout_flocking_), &Formation::callbackTimerAbortFlocking, this, false, false);
 
+  last_obstacle_distance_ = std::numeric_limits<double>::max();
+  last_obstacle_uav_z_    = std::numeric_limits<double>::max();
+
   ROS_INFO_ONCE("[Formation]: initialized");
   is_initialized_ = true;
 
@@ -103,35 +113,50 @@ void Formation::onInit() {
 
 /* callbackUAVNeighbors() //{ */
 
-void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom) {
+void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom, const mrs_msgs::ObstacleSectors::ConstPtr& obstacle_sectors) {
   /* return if is not initialized or the code is not on swarming mode */
   if (!is_initialized_ || !swarming_mode_)
     return;
 
-  /* calculate proximal control vector */
+  /* calculate obstacle control vector O */
+  double obst_vector_x = 0.0, obst_vector_y = 0.0, obst_vector_z;
+
+  /* check if there is an obstacle in front of the UAV */ 
+  if (obstacle_sectors->sectors[0] != -1.0 && obstacle_sectors->sectors[0] < _min_obstacle_distance_) {
+    obst_vector_z           = Formation::getObstacleMagnitude(obstacle_sectors->sectors[0]);
+    last_obstacle_distance_ = obstacle_sectors->sectors[0];
+    last_obstacle_uav_z_    = odom->pose.pose.position.z;
+  } else if (odom->pose.pose.position.z < (last_obstacle_uav_z_ + _move_up_)) {
+    obst_vector_z = Formation::getObstacleMagnitude(last_obstacle_distance_);
+  } else {
+    last_obstacle_distance_ = std::numeric_limits<double>::max();
+    last_obstacle_uav_z_    = std::numeric_limits<double>::max();
+  }
+
+  /* calculate proximal control vector P */
   double prox_vector_x = 0.0, prox_vector_y = 0.0, prox_vector_z = 0.0, prox_magnitude;
   if (neighbors->num_neighbors > 0) {
     for (unsigned int i = 0; i < neighbors->num_neighbors; i++) {
       if (neighbors->range[i] <= max_range_) {
         prox_magnitude = Formation::getProximalMagnitude(neighbors->range[i]);
-        
-        if (_use_3D_) {
-          prox_vector_x += prox_magnitude * sin(neighbors->inclination[i]) * cos(neighbors->bearing[i]);
-          prox_vector_y += prox_magnitude * sin(neighbors->inclination[i]) * sin(neighbors->bearing[i]);
-          prox_vector_z += prox_magnitude * cos(neighbors->inclination[i]);
-        } else {
-          prox_vector_x += prox_magnitude * cos(neighbors->bearing[i]);
-          prox_vector_y += prox_magnitude * sin(neighbors->bearing[i]);
-        }
+
+        prox_vector_x += prox_magnitude * sin(neighbors->inclination[i]) * cos(neighbors->bearing[i]);
+        prox_vector_y += prox_magnitude * sin(neighbors->inclination[i]) * sin(neighbors->bearing[i]);
+        prox_vector_z += prox_magnitude * cos(neighbors->inclination[i]);
       }
     }
   }
 
-  /* convert flocking control (f = p) vector to angular and linear movement */
-  double u = prox_vector_x * _K1_ + _move_forward_;
-  double w = prox_vector_y * _K2_;
+  /* convert flocking control F (F = P + O) vector to angular and linear movement */
+  double flock_vector_x = obst_vector_x + prox_vector_x;
+  double flock_vector_y = obst_vector_y + prox_vector_y;
+  double flock_vector_z = obst_vector_z + prox_vector_z;
 
-  /* create reference stamped msg */
+  double u = flock_vector_x * _K1_ + _move_forward_;
+  double w = flock_vector_y * _K2_;
+  double v = flock_vector_z * _K3_;
+  
+  /* create reference stamped service msg */
   mrs_msgs::ReferenceStampedSrv srv_reference_stamped_msg;    
 
   /* fill in header */
@@ -174,17 +199,16 @@ void Formation::callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighb
   
   /* set height */
   if (_use_3D_) {
-    double v = prox_vector_z * _K3_;
     srv_reference_stamped_msg.request.reference.position.z = math_utils::getMaxValue(odom->pose.pose.position.z + v, _minimum_height_);
   } else {
-    srv_reference_stamped_msg.request.reference.position.z = _desired_height_; 
+    srv_reference_stamped_msg.request.reference.position.z = math_utils::getMaxValue(odom->pose.pose.position.z + v, odom->pose.pose.position.z + neighbors->max_height_diff);
   }
 
   /* request service */
   if (srv_client_goto_.call(srv_reference_stamped_msg)) {
     
   } else {
-    ROS_ERROR("Failed to call service.\n");
+    ROS_ERROR("[Formation]: Failed to call service.\n");
   }
 
 }
@@ -464,6 +488,14 @@ bool Formation::callbackCloseNode([[maybe_unused]] std_srvs::Trigger::Request& r
 double Formation::getProximalMagnitude(double range) {
   return -4 * _steepness_potential_ * _strength_potential_ / range *
          (2 * pow(noise_ / range, 2 * _steepness_potential_) - pow(noise_ / range, _steepness_potential_));
+}
+
+//}
+
+/* getObstacleMagnitude() //{ */
+
+double Formation::getObstacleMagnitude(double range) {
+  return -_L1_ / pow(range, 2) * (1 / _min_obstacle_distance_ - 1 / range);
 }
 
 //}

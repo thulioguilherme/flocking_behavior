@@ -23,6 +23,7 @@ namespace math_utils {
   //}
 
   /* heading2Deg() //{ */
+
   double heading2Deg(const double a) {
     if (a < 0) {
       return 180 + 180 * (M_PI + a) / M_PI;

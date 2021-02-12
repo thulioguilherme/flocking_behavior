@@ -1,0 +1,5 @@
+flocking:
+  duration: 180
+
+  motion:
+    fixed_heading: true

@@ -6,6 +6,12 @@ desired_height: 2.5 # [m]
 
 minimum_height: 2.0 # [m]
 
+# Obstacle avoidance parameters
+obstacle_avoidance:
+  min_obstacle_distance: 2.5 # [m]
+  L1: 128 
+  move_up: 2.1 # [m]
+
 flocking:
   # Experiment parameters
   auto_start: false

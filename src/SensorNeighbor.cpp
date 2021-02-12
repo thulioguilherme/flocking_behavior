@@ -211,6 +211,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
     focal_heading = mrs_lib::AttitudeConverter(this_uav_pose_.pose.orientation).getHeading();
   }
 
+  double max_height_diff = 0.0;
   {
     std::scoped_lock lock(mutex_neighbors_position_);
 
@@ -218,6 +219,10 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
       if ((now - itr->second.header.stamp).toSec() < 2.0) {
         const double bearing = math_utils::relativeBearing(focal_x, focal_y, focal_heading, itr->second.point.x, itr->second.point.y);
         double range, inclination;
+
+        if ((itr->second.point.z - focal_z) > max_height_diff) {
+          max_height_diff = itr->second.point.z - focal_z;
+        } 
 
         if (_use_3D_) {
           range       = sqrt(pow(focal_x - itr->second.point.x, 2) + pow(focal_y - itr->second.point.y, 2) + pow(focal_z - itr->second.point.z, 2));
@@ -237,6 +242,7 @@ void SensorNeighbor::callbackTimerPubNeighbors([[maybe_unused]] const ros::Timer
   neighbor_info.header.frame_id = _this_uav_name_ + "/fcu";
   neighbor_info.header.stamp    = now;
   neighbor_info.num_neighbors   = neighbor_info.range.size();
+  neighbor_info.max_height_diff = max_height_diff;
 
   neigbor_pub_.publish(neighbor_info);
 }
