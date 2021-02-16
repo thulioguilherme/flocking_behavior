@@ -12,7 +12,6 @@ windows:
       panes:
         #- waitForRos; roslaunch mrs_simulation simulation.launch world_name:=grass_plane gui:=true
         - waitForRos; roslaunch mrs_simulation simulation.launch world_name:=plans gui:=true
-        - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav1
   - status:
       layout: tiled
       synchronize: after
