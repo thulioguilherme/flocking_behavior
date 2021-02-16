@@ -15,20 +15,20 @@ uav2:
 uav3:
   id: 3
   x: -3.0
-  y: -6.0
+  y: -10.2
   z: 0.0
   heading: 1.57
 
 uav4:
   id: 4
   x: 3.0
-  y: -6.0
+  y: -10.2
   z: 0.0
   heading: 1.57
 
 uav5:
   id: 5
   x: 0.0
-  y: -3.0
+  y: -5.1
   z: 0.0
   heading: 1.57
