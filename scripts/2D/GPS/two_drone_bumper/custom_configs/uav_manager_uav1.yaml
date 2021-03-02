@@ -1,5 +1,0 @@
-takeoff:
-  takeoff_height: 1.8
-
-  after_takeoff:
-    controller: MpcController

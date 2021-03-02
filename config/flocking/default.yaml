@@ -2,8 +2,6 @@ frame: "gps_origin"
 
 land_at_the_end: false
 
-desired_height: 2.5 # [m] 
-
 minimum_height: 2.0 # [m]
 
 # Obstacle avoidance parameters
@@ -20,7 +18,7 @@ flocking:
 
   # Proximal control parameters
   proximal: 
-    desired_distance: 6.0 # [m]
+    desired_distance: 4.0 # [m]
     range_multiplier: 1.8 
     steepness_potential: 2.0
     strength_potential: 6.0

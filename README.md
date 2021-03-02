@@ -22,8 +22,8 @@ The package contains two central nodes:
 ### Prerequisites
 * [ROS Noetic](http://wiki.ros.org/noetic)
 * [Multi-robot Systems Group UAV system](https://github.com/ctu-mrs/mrs_uav_system)
-* [UVDAR drivers and processing](https://github.com/ctu-mrs/uvdar_core)
-* [UVDAR Gazebo plugin](https://github.com/ctu-mrs/uvdar_gazebo_plugin)
+* [UVDAR drivers and processing](https://github.com/ctu-mrs/uvdar_core) - Only for UVDAR scripts
+* [UVDAR Gazebo plugin](https://github.com/ctu-mrs/uvdar_gazebo_plugin) - Only for UVDAR scripts
 
 ### Installing
 

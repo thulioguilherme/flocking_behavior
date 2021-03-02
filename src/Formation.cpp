@@ -22,7 +22,6 @@ void Formation::onInit() {
   /* load parameters */
   param_loader.loadParam("uav_name", _uav_name_);
   param_loader.loadParam("frame", _frame_);
-  param_loader.loadParam("desired_height", _desired_height_);
   param_loader.loadParam("land_at_the_end", _land_end_);
   param_loader.loadParam("use_3D", _use_3D_);
   param_loader.loadParam("minimum_height", _minimum_height_);

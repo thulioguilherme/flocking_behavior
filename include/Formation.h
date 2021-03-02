@@ -98,7 +98,6 @@ private:
 
   void        callbackUAVNeighbors(const flocking::Neighbors::ConstPtr& neighbors, const nav_msgs::Odometry::ConstPtr& odom, const mrs_msgs::ObstacleSectors::ConstPtr& obstacle_sectors);
   std::string _frame_;
-  double      _desired_height_;
   double      _minimum_height_;
   
   // | --------------------------- timer callbacks ----------------------------- |

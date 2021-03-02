@@ -3,11 +3,11 @@ uav1:
   x: -2.0
   y: 12.0
   z: 0.0
-  heading: 0.785
+  heading: 0.0
 
 uav2:
   id: 2
-  x: -7.0
+  x: -5.0
   y: 13.0
   z: 0.0
-  heading: 0.785
+  heading: 0.0
