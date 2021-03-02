@@ -106,11 +106,11 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-        - export UAV_NAME=uav5; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav3; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav4; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav5; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
   - formation:
       layout: tiled
       synchronize: after

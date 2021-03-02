@@ -11,16 +11,20 @@
 #include <mrs_lib/transformer.h>
 
 #include <mrs_msgs/PoseWithCovarianceArrayStamped.h>
+#include <mrs_msgs/Float64Stamped.h>
 
 #include <nav_msgs/Odometry.h>
 
 #include <geometry_msgs/PointStamped.h>
+
+#include <math.h>
 
 #include <map>
 #include <mutex>
 
 /* custom msgs */
 #include <flocking/Neighbors.h>
+#include <flocking/Point2DStamped.h>
 
 /* custom library */
 #include <MathUtils.h>
@@ -55,22 +59,33 @@ private:
   std::mutex                 mutex_this_uav_pose_;
   bool                       has_this_pose_;
 
-  std::map<unsigned int, geometry_msgs::PointStamped> neighbors_position_;
-  std::mutex                                          mutex_neighbors_position_;
+  void                     callbackThisUAVLocalOdom(const nav_msgs::Odometry::ConstPtr& odom);
+  ros::Subscriber          sub_this_uav_local_odom_;
+  mrs_msgs::Float64Stamped this_uav_local_height_;
+  bool                     has_this_uav_local_height_;
 
   /* GPS */
-  void                         callbackNeighborsUsingGPS(const nav_msgs::Odometry::ConstPtr& odom, const unsigned int id);
-  std::vector<ros::Subscriber> sub_odom_uavs_;
+  void                                             callbackNeighborsUsingGPSOdom(const nav_msgs::Odometry::ConstPtr& odom, const unsigned int uav_id);
+  std::vector<ros::Subscriber>                     sub_odom_uavs_;
+  std::map<unsigned int, flocking::Point2DStamped> neighbors_position_2d_;
+  std::mutex                                       mutex_neighbors_position_2d_;
+
+  void                                             callbackNeighborsUsingGPSOdomLocal(const nav_msgs::Odometry::ConstPtr& odom, const unsigned int uav_id);
+  std::vector<ros::Subscriber>                     sub_odom_local_uavs_;
+  std::map<unsigned int, mrs_msgs::Float64Stamped> neighbors_height_;
+  std::mutex                                       mutex_neighbors_height_;
 
   /* UVDAR */
-  void            callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_pose);
-  ros::Subscriber sub_uvdar_filtered_poses_;
+  void                                                callbackNeighborsUsingUVDAR(const mrs_msgs::PoseWithCovarianceArrayStamped::ConstPtr& array_pose);
+  ros::Subscriber                                     sub_uvdar_filtered_poses_;
+  std::map<unsigned int, geometry_msgs::PointStamped> neighbors_position_;
+  std::mutex                                          mutex_neighbors_position_;
 
   // | --------------------------- timer callbacks ----------------------------- |
 
   void           callbackTimerPubNeighbors(const ros::TimerEvent& event);
   ros::Timer     timer_pub_neighbors_;
-  ros::Publisher neigbor_pub_;
+  ros::Publisher pub_neighbors_;
 };
 
 }  // namespace sensor_neighbor

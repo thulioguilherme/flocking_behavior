@@ -35,13 +35,13 @@ Follow the instructions to install our package into your machine and use it for 
 
 ## Testing
 
-The package can be tested using the [Multi-robot Systems Group UAV system](https://github.com/ctu-mrs/mrs_uav_system). There are a few examples already settled in the simulation directory.
+The package can be tested using the [Multi-robot Systems Group UAV system](https://github.com/ctu-mrs/mrs_uav_system). There are a few examples already settled in the scripts directory.
 
-### Running a simulation
+### Running a script
 
-1. Start one of the simulations from the simulation directory. The flocking behavior will start automatically after a few seconds if the parameter `auto_start` is `true` (see `config/flocking/default.yaml`). You don't do the following steps if this is the case. Only the optional step, if necessary. 
+1. Start one of the scripts from the simulation directory. The flocking behavior will start automatically after a few seconds if the parameter `auto_start` is `true` (see `config/flocking/default.yaml`). You don't do the following steps if this is the case. Only the optional step, if necessary. 
 ```
-cd simulation/($SELECTED_SIMULATION) && ./start.sh
+cd scripts/($SELECTED_SCRIPT) && ./start.sh
 ```
 
 2. The following steps are only needed if the flocking behavior is not supposed to start automatically. After the takeoff, send the command to the UAVs to change to hover mode. For this, you need to call the service `send_command` from the node `CommandSender` using the request value equals to `0`.

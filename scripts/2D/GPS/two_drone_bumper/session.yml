@@ -10,8 +10,7 @@ windows:
   - gazebo:
       layout: tiled
       panes:
-        - waitForRos; roslaunch mrs_simulation simulation.launch world_name:=grass_plane gui:=true
-        - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav1
+        - waitForRos; roslaunch mrs_simulation simulation.launch world_name:=plans gui:=true
   - status:
       layout: tiled
       synchronize: after
@@ -21,7 +20,7 @@ windows:
   - spawn:
       layout: tiled
       panes:
-        - waitForSimulation; rosservice call /mrs_drone_spawner/spawn "1 2 $UAV_TYPE --enable-rangefinder --enable-rplidar --enable-bluefox-camera --pos_file `pwd`/pos.yaml"
+        - waitForSimulation; sleep 10; rosservice call /mrs_drone_spawner/spawn "1 2 $UAV_TYPE --enable-rangefinder --enable-rplidar --enable-bluefox-camera --pos_file `pwd`/pos.yaml"
   - bumper:
       layout: tiled
       synchronize: after
@@ -40,22 +39,22 @@ windows:
       panes:
         - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
         - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
-  - command_sender:
-      layout: tiled
-      panes:
-        - waitForSimulation; roslaunch flocking command_sender.launch config_uav_names:=./custom_configs/uav_names.yaml
-  - hover_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 0\"'
-  - swarming_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 1\"'
-  - emergency_mode:
-      layout: tiled
-      panes:
-        - 'history -s rosservice call /command_sender/send_command \"value: 2\"'
+#  - command_sender:
+#      layout: tiled
+#      panes:
+#        - waitForSimulation; roslaunch flocking command_sender.launch config_uav_names:=./custom_configs/uav_names.yaml
+#  - hover_mode:
+#      layout: tiled
+#      panes:
+#        - 'history -s rosservice call /command_sender/send_command \"value: 0\"'
+#  - swarming_mode:
+#      layout: tiled
+#      panes:
+#        - 'history -s rosservice call /command_sender/send_command \"value: 1\"'
+#  - emergency_mode:
+#      layout: tiled
+#      panes:
+#        - 'history -s rosservice call /command_sender/send_command \"value: 2\"'
   - takeoff:
       layout: tiled
       synchronize: after
@@ -76,14 +75,14 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch config_uav_names:=./custom_configs/uav_names.yaml
-  - formation:
-      layout: tiled
-      synchronize: after
-      panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking sensor_neighbor.launch use_3D:=true config_uav_names:=./custom_configs/uav_names.yaml
+#  - formation:
+#      layout: tiled
+#      synchronize: after
+#      panes:
+#        - export UAV_NAME=uav1; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
+#        - export UAV_NAME=uav2; waitForOdometry; roslaunch flocking formation.launch config_flocking:=./custom_configs/flocking/modified.yaml
 #  - slow_down:
 #      layout: even-vertical
 #      panes:

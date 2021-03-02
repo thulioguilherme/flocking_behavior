@@ -1,6 +1,0 @@
-flocking:
-  duration: 360
-
-  motion:
-    K2: 0.1
-    fixed_heading: true
