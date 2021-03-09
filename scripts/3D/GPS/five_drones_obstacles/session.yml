@@ -37,11 +37,11 @@ windows:
       layout: tiled
       synchronize: after
       panes:
-        - export UAV_NAME=uav1; waitForOdometry; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_control_manager:=./custom_configs/control_manager.yaml
-        - export UAV_NAME=uav2; waitForOdometry; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_control_manager:=./custom_configs/control_manager.yaml
-        - export UAV_NAME=uav3; waitForOdometry; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_control_manager:=./custom_configs/control_manager.yaml
-        - export UAV_NAME=uav4; waitForOdometry; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_control_manager:=./custom_configs/control_manager.yaml
-        - export UAV_NAME=uav5; waitForOdometry; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_control_manager:=./custom_configs/control_manager.yaml
+        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_uav_manager:=./custom_configs/uav_manager_uav1.yaml
+        - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_uav_manager:=./custom_configs/uav_manager_uav2.yaml
+        - export UAV_NAME=uav3; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_uav_manager:=./custom_configs/uav_manager_uav3.yaml
+        - export UAV_NAME=uav4; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_uav_manager:=./custom_configs/uav_manager_uav4.yaml
+        - export UAV_NAME=uav5; waitForSimulation; roslaunch mrs_uav_general core.launch config_mpc_tracker:=./custom_configs/mpc_tracker.yaml config_uav_manager:=./custom_configs/uav_manager_uav5.yaml
   - automatic_start:
       layout: tiled
       synchronize: after
